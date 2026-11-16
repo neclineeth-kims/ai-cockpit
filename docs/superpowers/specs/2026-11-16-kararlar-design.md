@@ -76,12 +76,12 @@ Görsel taslak kodlamadan önce `docs/superpowers/specs/` altına HTML olarak ha
 
 ## Kapsam dışı, sonraya
 
-- **K5 AG-UI girişi**: `POST /api/ag-ui/events` ile AG-UI olay akışını (RUN_STARTED, TOOL_CALL_*, RUN_FINISHED + interrupt) alıp aynı tablolara yazmak.
-- **K6 Kokpitten cevap**: Ajan Çalıştır sayfasından başlatılan ve resume destekleyen ajanlar için bekleyen soruyu kokpitten cevaplamak.
+- **K5 AG-UI girişi** (ayrı faz): `POST /api/ag-ui/events` ile AG-UI olay akışını (RUN_STARTED, TOOL_CALL_*, RUN_FINISHED + interrupt) alıp aynı tablolara yazmak.
+- **K6 Kokpitten cevap** (ayrı faz): Ajan Çalıştır sayfasından başlatılan ve resume destekleyen ajanlar için bekleyen soruyu kokpitten cevaplamak.
 - Codex ve Cursor'un soru olayları: hangi olay adıyla geldikleri doğrulanınca eklenir.
 
-## Açık sorular
+## Kararlar (16 Kasım 2026)
 
-1. Tasarım dosyası sayılacak yollar: `docs/superpowers/specs/**`, `design/**`, `*.dc.html` ve görseller yeterli mi?
-2. Brief'e giren kararlar: aynı depodaki son 20 karar mı, yoksa görevin `Alan:` desenine dokunan oturumlardaki kararlar mı?
-3. K5 ve K6 bu planın içine mi girsin, ayrı faz mı olsun?
+1. Tasarım sayılan dosyalar: `docs/superpowers/specs/**`, `design/**` ve görseller (`.png`, `.jpg`, `.jpeg`, `.svg`, `.webp`). `*.dc.html` kanvasları yalnız bu klasörlerin içindeyse girer.
+2. Brief'e giren kararlar: görevin `Alan:` desenindeki dosyalara Write/Edit yapmış oturumlarda verilen kararlar; görevde `Alan:` yoksa aynı depodaki son 20 karar. En çok 4 KB.
+3. K5 (AG-UI girişi) ve K6 (kokpitten cevap) ayrı faz; bu plan K1-K4 ile biter.
