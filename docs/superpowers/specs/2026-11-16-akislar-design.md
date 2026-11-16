@@ -77,8 +77,8 @@ adimlar:
 - **İş tahtası**: akış görevin worktree'sinde ve brief'iyle çalışır. Teslim adımı bugünkü PR/birleştirme önizlemesini kullanır.
 - **Ajan başlatma**: mevcut run-spawner'lar başsız modda kullanılır; yeni ajan entegrasyonu yazılmaz.
 
-## Açık sorular
+## Kararlar (16 Kasım 2026)
 
-1. İlk hangi şablonla başlanacak: `ozellik`, `hata` ya da `inceleme-turu`?
-2. Akış motoru kokpit sunucusunda mı çalışsın (sunucu kapanınca akış durur, açılınca kaldığı adımdan devam eder), yoksa ayrı bir arka plan süreci mi?
-3. Kabul kapısı dışında varsayılan kapı: uygulamadan önce plan onayı da istensin mi?
+1. İlk şablon `inceleme-turu` (İncele, Düzelt, Yeniden incele). Motor önce bununla çalıştırılır; `ozellik` ve `hata` sonra eklenir.
+2. Akış motoru kokpit sunucusunun içinde çalışır. Ajanlar ayrı süreçte koşar; sunucu kapanırsa çalışan adım "kesildi" olur ve sunucu açılınca o adımdan sürdürülür.
+3. `ozellik` ve `hata` şablonlarında uygulamadan önce plan onayı kapısı vardır (Netleştir ya da Yeniden üret çıktısı onaylanmadan kod yazılmaz). `inceleme-turu`nda yalnız sondaki kabul kapısı vardır.
