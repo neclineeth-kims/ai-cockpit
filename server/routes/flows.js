@@ -74,7 +74,8 @@ router.get(
     const n = Number.parseInt(req.query.task, 10);
     res.json({
       runs: store.listRuns(db, {
-        repo: str(req.query.repo),
+        // runs store workRepo(cwd); a worktree or alternate spelling of the repo must match too
+        repo: str(req.query.repo) && (workRepo(str(req.query.repo)) || str(req.query.repo)),
         task: Number.isInteger(n) && n > 0 ? `#${n}` : undefined,
       }),
     });
