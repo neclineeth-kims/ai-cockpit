@@ -366,3 +366,44 @@ test("listDesigns keeps the latest write, flags missing files, skips other proje
     },
   ]);
 });
+
+test("listDesigns takes the project from the written file, not the session cwd", async () => {
+  const proj = path.join(root, "xproj");
+  const other = path.join(root, "xother");
+  fs.mkdirSync(path.join(proj, ".git"), { recursive: true });
+  fs.mkdirSync(path.join(proj, ".claude", "worktrees", "w"), { recursive: true });
+  fs.writeFileSync(
+    path.join(proj, ".claude", "worktrees", "w", ".git"),
+    `gitdir: ${path.join(proj, ".git", "worktrees", "w")}\n`
+  );
+  fs.mkdirSync(path.join(other, ".git"), { recursive: true });
+  const f = writeJsonl([
+    use(
+      "x1",
+      "Write",
+      { file_path: path.join(proj, "design", "cross.md") },
+      "2026-03-01T00:00:01Z"
+    ),
+    use(
+      "x2",
+      "Write",
+      { file_path: path.join(proj, ".claude", "worktrees", "w", "design", "inner.html") },
+      "2026-03-01T00:00:02Z"
+    ),
+  ]);
+  db.prepare(
+    "INSERT INTO sessions (id, cwd, transcript_path, status) VALUES ('x', ?, ?, 'completed')"
+  ).run(other, f);
+  db.prepare(
+    "INSERT INTO events (session_id, event_type, tool_name) VALUES ('x', 'PostToolUse', 'Write')"
+  ).run();
+  const out = await listDesigns(db, { project: proj });
+  assert.deepEqual(
+    out.map((d) => [d.path, d.kind, d.sessionId]),
+    [
+      ["design/inner.html", "taslak", "x"],
+      ["design/cross.md", "spec", "x"],
+    ]
+  );
+  assert.deepEqual(await listDesigns(db, { project: other }), []);
+});

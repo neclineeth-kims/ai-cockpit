@@ -280,17 +280,20 @@ async function listDesigns(db, { project }) {
     )
     .all();
   const latest = new Map();
+  const where = new Map(); // dir -> { repo, root }; a session may write into another repo than its cwd
   for (const r of rows) {
-    if (!r.cwd || workRepo(r.cwd) !== project) continue;
     let scan;
     try {
       scan = await scanTranscript(r.transcript_path);
     } catch {
       continue; // transcript missing or unreadable
     }
-    const roots = [project, checkoutRoot(r.cwd)];
     for (const w of scan.writes) {
-      const rel = repoRelative(w.file, roots);
+      const dir = path.dirname(w.file);
+      if (!where.has(dir)) where.set(dir, { repo: workRepo(dir), root: checkoutRoot(dir) });
+      const { repo, root } = where.get(dir);
+      if (repo !== project || !root) continue;
+      const rel = repoRelative(w.file, [root]);
       const kind = rel && isDesignPath(rel);
       const cur = latest.get(rel);
       if (kind && (!cur || w.at > cur.writtenAt))
