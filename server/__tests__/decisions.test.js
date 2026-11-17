@@ -508,3 +508,21 @@ test("brief decisions skip pending and cancelled, and list plan approvals", asyn
     "- 2026-06-02 Plan onaylandı: Buyuk plan",
   ]);
 });
+
+test("replayed api-request-blob lines are not counted again", async () => {
+  const Q = q("Blob?", ["a", "b"]);
+  const blob = JSON.stringify({
+    type: "api-request-blob",
+    message: {
+      content: [{ type: "tool_use", id: "tb", name: "AskUserQuestion", input: { questions: [Q] } }],
+    },
+  });
+  const ds = await decide([
+    use("tb", "AskUserQuestion", { questions: [Q] }, "2026-01-01T00:00:01Z"),
+    result("tb", { answers: { "Blob?": "a" } }, "2026-01-01T00:00:02Z"),
+    blob,
+  ]);
+  assert.equal(ds.length, 1);
+  assert.equal(ds[0].status, "resolved");
+  assert.equal(ds[0].askedAt, "2026-01-01T00:00:01Z");
+});

@@ -43,6 +43,8 @@ async function readScan(file) {
     } catch {
       continue;
     }
+    // api-request-blob lines replay earlier messages without a timestamp: only real turns count.
+    if (obj.type !== "assistant" && obj.type !== "user") continue;
     const at = obj.timestamp || null;
     if (at) scan.lastAt = at;
     const content = obj.message && obj.message.content;
