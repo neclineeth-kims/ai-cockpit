@@ -137,6 +137,7 @@ test("design file served", async () => {
   const r = await get(`/designs/file?${P()}&path=${encodeURIComponent("design/a.md")}`);
   assert.equal(r.status, 200);
   assert.equal(await r.text(), "DESIGN-A");
+  assert.equal(r.headers.get("content-security-policy"), "sandbox allow-scripts");
 });
 
 test("design file outside project is 404", async () => {

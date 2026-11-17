@@ -15,7 +15,8 @@ const wrap = (fn) => async (req, res) => {
   try {
     await fn(req, res);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message });
+    // Unexpected errors may carry local paths: only deliberate failures show their message.
+    res.status(err.status || 500).json({ error: err.status ? err.message : "Sunucu hatası" });
   }
 };
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -62,6 +63,9 @@ router.get(
       }
     }
     if (!real) throw fail(404, "Tasarım dosyası bulunamadı");
+    // Agent-written HTML must not run with the cockpit's origin (its API and token).
+    res.set("Content-Security-Policy", "sandbox allow-scripts");
+    res.set("X-Content-Type-Options", "nosniff");
     res.sendFile(real);
   })
 );
