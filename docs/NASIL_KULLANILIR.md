@@ -13,10 +13,11 @@ AI Cockpit, yapay zekâ ile kod geliştirirken çalışan ajanları (Claude Code
 5. [Giden istemler](#5-giden-istemler)
 6. [Ajan Çalıştır (Cursor, Claude, Codex)](#6-ajan-çalıştır)
 7. [Topluluk: ortak iş kuyruğu](#7-topluluk)
-8. [Ayarlar: fiyat senkronu, dil, tema](#8-ayarlar)
-9. [Başka bilgisayardan erişim ve uzak ajanlar](#9-başka-bilgisayardan-erişim-ve-uzak-ajanlar)
-10. [Claude limitlerini bağlama](#10-claude-limitlerini-bağlama)
-11. [Sorun giderme](#11-sorun-giderme)
+8. [Akışlar: tekrarlanan teslim adımları](#8-akışlar)
+9. [Ayarlar: fiyat senkronu, dil, tema](#9-ayarlar)
+10. [Başka bilgisayardan erişim ve uzak ajanlar](#10-başka-bilgisayardan-erişim-ve-uzak-ajanlar)
+11. [Claude limitlerini bağlama](#11-claude-limitlerini-bağlama)
+12. [Sorun giderme](#12-sorun-giderme)
 
 ---
 
@@ -55,7 +56,7 @@ En üstte oturum, ajan, olay ve maliyet özetleri; altında canlı bölümler va
 - **Toplam tasarruf** (yeşil şerit): önbellek (prompt caching) sayesinde, aynı token'lar düz girdi olarak faturalansaydı ödenecek tutara göre ne kadar tasarruf ettiğin. API liste fiyatıyla hesaplanır; aboneliğinde gerçekten ödediğin para değildir.
 - **Token / dk, önbellek isabeti, önbellek tasarrufu, harcanan**: son 1 saat ve tüm zamanlar.
 - **Grafik**: son 60 dakikada dakika başına token (çubuk) ve önbellek isabeti (yeşil çizgi).
-- **Modele göre tablo**: Claude, Codex/GPT, Gemini modelleri ayrı ayrı. Fiyatı bilinmeyen modelde "fiyat yok" yazar; [fiyat senkronu](#8-ayarlar) bunu doldurur.
+- **Modele göre tablo**: Claude, Codex/GPT, Gemini modelleri ayrı ayrı. Fiyatı bilinmeyen modelde "fiyat yok" yazar; [fiyat senkronu](#9-ayarlar) bunu doldurur.
 
 ### Kullanım limitleri
 
@@ -63,7 +64,7 @@ Bu bilgisayarda kurulu her AI aboneliği kendiliğinden listelenir:
 
 | Araç | Plan nereden okunur | Limit |
 | --- | --- | --- |
-| Claude Code | `~/.claude.json` (ör. Max 20x) | 5 saat ve haftalık, [durum satırı bağlanınca](#10-claude-limitlerini-bağlama) |
+| Claude Code | `~/.claude.json` (ör. Max 20x) | 5 saat ve haftalık, [durum satırı bağlanınca](#11-claude-limitlerini-bağlama) |
 | Codex | `~/.codex/auth.json` (ör. ChatGPT Team) | 5 saat ve haftalık, Codex loglarından |
 | Cursor | `cursor-agent about` (ör. Ultra) | Yerelde tutulmuyor: bugünkü oturum sayısı + "Kullanım paneli" bağlantısı |
 | Gemini CLI | `~/.gemini/settings.json` | Yerelde tutulmuyor: bugünkü oturum/istek sayısı + panel bağlantısı |
@@ -212,7 +213,49 @@ Akış:
 
 Sağda **Ekip** (depo üyeleri, rolleri, aktif/biten görev sayıları) ve **Son bitenler** (kim, ne zaman) görünür. Depoya erişimi olan herkes kendi kokpitinde aynı panoyu görür.
 
-## 8. Ayarlar
+## 8. Akışlar
+
+Bir görevi her seferinde aynı adımlarla teslim etmek için: netleştir, uygula, bağımsız incele, test, kabul. Adımlar depodaki bir dosyada yazılıdır; kokpit onları görevin worktree'sinde sırayla çalıştırır, insan onayı gereken yerde durur ve Kararlar'ın Bekleyen sekmesinde sorar.
+
+**Başlamak**
+
+1. Topluluk sayfasında **Akış şablonlarını ekle**: `inceleme-turu`, `ozellik`, `hata` akışları `.ai-cockpit/akislar/`, rol istemleri `.ai-cockpit/roller/` altına kopyalanır. Var olan dosyanın üzerine yazılmaz. Dosyaları istediğin gibi düzenleyip commit'le.
+2. Aldığın bir görevin satırında **Akışla başlat** ve akışı seç. Akış görevin worktree'sinde ve brief'iyle çalışır.
+3. Akış bir depoda ilk kez çalışacaksa önce **akış onayı** ister: Kararlar > Bekleyen'de adımlar, ajanlar, modeller ve komutlar listelenir. Onay akış dosyasının ve rol istemlerinin o anki içeriğine bağlıdır; biri değişirse yeniden onay istenir, onaydan sonra değişirse koşu durur.
+
+**Koşu sayfası** (görev satırındaki rozete tıkla): adım şeridi, her adımın turları, süresi, maliyeti, oturumu, logu ve çıktı dosyası. *Durdur* çalışan ajanı ve açtığı süreçleri durdurur. *Yeniden dene* hatalı adımı yeni bir turla çalıştırır. *Buradan başlat* seçilen adımdan sonrasını yeniden koşar.
+
+**Kapılar** (Kararlar > Bekleyen):
+
+| Kapı | Ne zaman | Seçenekler |
+| --- | --- | --- |
+| Akış onayı | Akış bu içerikle ilk kez çalışacak | Onayla ve başlat |
+| Kabul ya da plan onayı | Akıştaki `gate` adımı | Onayla; ya da not yazıp izin verilen bir adıma geri gönder |
+| Tur sınırı aşıldı | İnceleme `en_cok_tur` kez "DÜZELT" dedi | Yine de devam et; ya da düzeltmeye geri gönder |
+| Maliyet tavanı aşıldı | Koşunun maliyeti `maliyet_tavani`'na ulaştı | Tavanı bir kat artırıp devam et |
+
+**Akış dosyası** (`.ai-cockpit/akislar/<ad>.yaml`, `ad` dosya adıyla aynı olmalı):
+
+| Alan | Adım türü | Anlamı |
+| --- | --- | --- |
+| `ad`, `aciklama`, `maliyet_tavani` | akış | Ad, açıklama, isteğe bağlı dolar tavanı |
+| `id` | hepsi | Adım adı: harf, rakam, `-`, `_` |
+| `tur` | hepsi | `agent`, `script` ya da `gate` |
+| `rol` | agent | Rol istemi dosyası (depoya göreli) |
+| `ajan`, `model` | agent | `claude` (ör. `opus`, `sonnet`) ya da `opencode` (ör. `zai-coding-plan/glm-5.3`). Codex ve Cursor henüz yok. |
+| `girdi`, `cikti` | agent | `.ai-cockpit/run/` altındaki dosyalar; girdi önceki bir adımın çıktısı olmalı |
+| `basarisizsa`, `en_cok_tur` | agent | Çıktının ilk satırı `SONUÇ: DÜZELT` ise dönülecek önceki adım ve en çok tur (varsayılan 2) |
+| `zaman_asimi_dk` | agent, script | Varsayılan 60 (agent), 10 (script) |
+| `komut` | script | Worktree'de çalışan kabuk komutu |
+| `gosterilen`, `geri_gonderilebilir`, `mesaj` | gate | Kapıda gösterilecek dosyalar, geri gönderilebilecek önceki adımlar, soru metni |
+
+- Bir adımın önceki turunun çıktısı `<ad>.tur<N>.md` olarak saklanır.
+- Kokpit kapanırsa çalışan adım "kesildi" olur; kokpit açılınca o adımdan sürer.
+- Aynı görevde aynı anda tek koşu olur.
+- Akış hiçbir zaman push etmez, PR ya da issue yazmaz; teslimi bugünkü gibi sen yaparsın.
+- GLM adımları opencode'u `--auto` ile, Claude adımları `acceptEdits` izniyle çalıştırır; bu yüzden akışlar yalnız görevin kendi worktree'sinde çalışır.
+
+## 9. Ayarlar
 
 ![Fiyat senkronu](images/nasil/09-fiyat-senkronu.png)
 
@@ -226,7 +269,7 @@ Telefonda kenar çubuğu ikon şeridine iner, dokununca açılır:
 
 <img src="images/nasil/11-telefon.png" alt="Telefon görünümü" width="320">
 
-## 9. Başka bilgisayardan erişim ve uzak ajanlar
+## 10. Başka bilgisayardan erişim ve uzak ajanlar
 
 ### Kokpiti başka cihazlardan açmak
 
@@ -258,7 +301,7 @@ ai-cockpit-agent status
 - Kokpite ulaşılamazsa ajan asla beklemez.
 - Kaldırmak için: `ai-cockpit-agent uninstall` ve `ai-cockpit-agent disconnect`.
 
-## 10. Claude limitlerini bağlama
+## 11. Claude limitlerini bağlama
 
 Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez `~/.claude/settings.json` içindeki `statusLine.command` değerini, mevcut komutunu sarmalayacak şekilde değiştir:
 
@@ -271,7 +314,7 @@ Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez 
 
 Önceki durum satırın aynen çalışmaya devam eder; limitler `~/.ai-cockpit/claude-limits.json`'a yazılır ve Panel'de görünür.
 
-## 11. Sorun giderme
+## 12. Sorun giderme
 
 | Belirti | Çözüm |
 | --- | --- |
@@ -279,7 +322,7 @@ Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez 
 | "Erişim anahtarı" penceresi çıkıyor | Uzak mod açık. `ai-cockpit start` çıktısındaki `#token=` bağlantısını aç ya da anahtarı yapıştır (`~/.ai-cockpit/dashboard-token`). |
 | Diğer cihaz LAN IP'siyle bağlanamıyor | macOS: Sistem Ayarları > Gizlilik ve Güvenlik > Yerel Ağ'dan Node'a izin ver. Tailscale adresi bu izne takılmaz. |
 | Tailscale adresi açılmıyor | Tailnet'te Serve kapalı olabilir; `~/.ai-cockpit/server.log` içindeki bağlantıdan bir kez aç. |
-| Claude limitleri "bilinmiyor" | [Bölüm 10](#10-claude-limitlerini-bağlama)'daki durum satırı bağlantısı yapılmamış. |
+| Claude limitleri "bilinmiyor" | [Bölüm 11](#11-claude-limitlerini-bağlama)'daki durum satırı bağlantısı yapılmamış. |
 | Plan'da süreler "—" | Ölçüm, `(est:…)` ve biten görev yok. Bir görevi "bitti" işaretle ya da başlıklara `(est:2h)` ekle. |
 | Cursor görevi hemen bitiyor | Klasör güvenilir değil: "Bu klasöre güven (--trust)" kutusunu işaretle. |
 | İstemde dosya içeriği yerine "(… dosyasından)" yazıyor | Dosya kokpitte ayarlı bir proje klasörünün içinde değil (güvenlik gereği okunmaz). |
