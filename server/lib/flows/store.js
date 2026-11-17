@@ -54,13 +54,14 @@ function getRun(db, id) {
   return { ...rest, flow: JSON.parse(json), steps };
 }
 
-function listRuns(db, { repo, cwd, status } = {}) {
+function listRuns(db, { repo, cwd, status, task } = {}) {
   const where = [];
   const args = [];
   for (const [col, v] of [
     ["repo", repo],
     ["cwd", cwd],
     ["status", status],
+    ["task", task],
   ]) {
     if (v != null) {
       where.push(`${col} = ?`);

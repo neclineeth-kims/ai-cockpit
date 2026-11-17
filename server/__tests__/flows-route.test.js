@@ -329,3 +329,54 @@ test("runner refuses to start an unapproved run even if forced to running", asyn
   assert.equal(store.getRun(db, id).status, "gate");
   assert.equal(ag.calls.length, 0);
 });
+
+test("start by task number uses the task worktree and stores #n", async () => {
+  const community = require("../lib/community");
+  const cwd = mkRepo();
+  approve(cwd);
+  const [rc, rw] = [community.readConfig, community.taskWorktree];
+  community.readConfig = () => ({ localPath: cwd });
+  try {
+    community.taskWorktree = async (_cfg, num) => (num === 7 ? cwd : null);
+    router.__setRunner(createRunner({ db, agents: fakeAgents(writeU) }));
+    const r = await call("", "POST", { task: 7, flow: "demo" });
+    assert.equal(r.status, 201);
+    const { run } = await r.json();
+    assert.equal(run.task, "#7");
+    assert.equal(run.cwd, cwd);
+    await settle(run.id);
+    const none = await call("", "POST", { task: 8, flow: "demo" });
+    assert.equal(none.status, 409);
+    assert.match((await none.json()).error, /worktree/);
+  } finally {
+    [community.readConfig, community.taskWorktree] = [rc, rw];
+  }
+});
+
+test("GET /api/flows?task= filters runs by task", async () => {
+  const a = await begin();
+  const id = a.id;
+  db.prepare("UPDATE flow_runs SET task = '#42' WHERE id = ?").run(id);
+  const hit = await (await call("?task=42")).json();
+  assert.deepEqual(
+    hit.runs.map((r) => r.id),
+    [id]
+  );
+  assert.equal((await (await call("?task=43")).json()).runs.length, 0);
+});
+
+test("install with repo:true copies into the community localPath", async () => {
+  const community = require("../lib/community");
+  const cwd = mkRepo();
+  const rc = community.readConfig;
+  community.readConfig = () => ({ localPath: cwd });
+  try {
+    const r = await call("/install", "POST", { repo: true });
+    assert.equal(r.status, 200);
+    const out = await r.json();
+    assert.ok(out.copied.length + out.skipped.length > 0);
+    assert.ok(fs.existsSync(path.join(cwd, ".ai-cockpit", "roller")));
+  } finally {
+    community.readConfig = rc;
+  }
+});

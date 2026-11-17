@@ -12,6 +12,7 @@ const { createRunner } = require("../lib/flows/runner");
 const { answerGate, APPROVAL_STEP, APPROVAL_NOTE } = require("../lib/flows/gates");
 const { flowHash, flowPath } = require("../lib/flows/approval");
 const { workRepo, checkoutRoot } = require("../lib/plan");
+const community = require("../lib/community");
 
 const router = Router();
 let runner = createRunner({ db });
@@ -69,7 +70,15 @@ function resumeAt(run, step) {
 
 router.get(
   "/",
-  wrap((req, res) => res.json({ runs: store.listRuns(db, { repo: str(req.query.repo) }) }))
+  wrap((req, res) => {
+    const n = Number.parseInt(req.query.task, 10);
+    res.json({
+      runs: store.listRuns(db, {
+        repo: str(req.query.repo),
+        task: Number.isInteger(n) && n > 0 ? `#${n}` : undefined,
+      }),
+    });
+  })
 );
 
 const TEMPLATES = path.join(__dirname, "..", "flows-templates");
@@ -94,7 +103,8 @@ router.get(
 router.post(
   "/install",
   wrap((req, res) => {
-    const cwd = str(req.body?.cwd);
+    let cwd = str(req.body?.cwd);
+    if (!cwd && req.body?.repo === true) cwd = community.readConfig()?.localPath;
     if (!cwd || !checkoutRoot(cwd)) throw fail(400, "cwd bir git dizini olmalı");
     const copied = [];
     const skipped = [];
@@ -127,8 +137,16 @@ router.get(
 
 router.post(
   "/",
-  wrap((req, res) => {
-    const cwd = str(req.body?.cwd);
+  wrap(async (req, res) => {
+    let cwd = str(req.body?.cwd);
+    let task = str(req.body?.task);
+    const num = req.body?.task;
+    if (!cwd && Number.isInteger(num) && num > 0) {
+      const cfg = community.readConfig();
+      cwd = cfg && (await community.taskWorktree(cfg, num));
+      if (!cwd) throw fail(409, "Görevin worktree'si yok; önce görevi al");
+      task = `#${num}`;
+    }
     if (!cwd || !checkoutRoot(cwd)) throw fail(400, "cwd bir git dizini olmalı");
     const { flow, hash } = loadFlow(cwd, req.body.flow);
     if (store.activeRunForCwd(db, cwd)) throw fail(409, "Bu dizinde zaten etkin bir koşu var");
@@ -137,7 +155,7 @@ router.post(
     const run = store.createRun(db, {
       repo,
       cwd,
-      task: str(req.body.task),
+      task,
       flow,
       flowHash: hash,
       status: approved ? "running" : "gate",

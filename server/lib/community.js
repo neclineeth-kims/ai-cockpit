@@ -138,6 +138,26 @@ function slug(title) {
   );
 }
 
+/**
+ * Existing worktree folder of a task I claimed, or null. Local only: the branch must already
+ * exist (claim creates it) and its worktree folder must be on disk.
+ */
+async function taskWorktree(cfg, number) {
+  const out = await git(cfg.localPath, [
+    "for-each-ref",
+    "--sort=-committerdate",
+    "--format=%(refname:short)",
+    `refs/heads/task/${number}-*`,
+  ]).catch(() => "");
+  const branch = out
+    .split("\n")
+    .map((l) => l.trim())
+    .find(Boolean);
+  if (!branch) return null;
+  const cwd = worktreePath(cfg, branch);
+  return fs.existsSync(cwd) ? cwd : null;
+}
+
 const branchFor = (issue) => `task/${issue.number}-${slug(issue.title)}`;
 
 /**
@@ -1341,6 +1361,7 @@ module.exports = {
   worktreePath,
   ensureWorktree,
   taskBranch,
+  taskWorktree,
   wtBin,
   _resetWtBin,
   estimateFromLabels,
