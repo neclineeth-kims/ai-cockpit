@@ -7,6 +7,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const store = require("./store");
+const { flowHash, flowPath } = require("./approval");
 
 const RUN_DIR = ".ai-cockpit/run";
 const RESULT_RE = /^SONUÇ:\s*(TAMAM|DÜZELT)\s*$/;
@@ -130,9 +131,6 @@ function createRunner({ db, agents = require("./agents") }) {
   }
 
   async function execScript(run, step) {
-    if (!store.isScriptApproved(db, run.repo, step.komut)) {
-      return toGate(run, step, `Script onayı: ${step.komut}`);
-    }
     const round = store.roundsOf(db, run.id, step.id) + 1;
     const logPath = path.join(run.cwd, RUN_DIR, "log", `${step.id}-${round}.log`);
     const row = store.startStep(db, run.id, step.id);
@@ -174,10 +172,25 @@ function createRunner({ db, agents = require("./agents") }) {
     }
   }
 
+  // The approval covers the flow file and its role prompts as they were; anything edited since is unapproved.
+  function changedSinceApproval(run) {
+    try {
+      const text = fs.readFileSync(flowPath(run.cwd, run.flow.ad), "utf8");
+      return flowHash(run.cwd, text, run.flow) !== run.flow_hash;
+    } catch {
+      return true;
+    }
+  }
+
   async function start(runId) {
     if (active.has(runId)) return;
     active.add(runId);
     try {
+      const run = store.getRun(db, runId);
+      if (run?.flow_hash && changedSinceApproval(run)) {
+        const row = store.startStep(db, runId, run.current_step || run.flow.adimlar[0].id);
+        return fail(run, row, "Akış dosyası onaydan sonra değişti; yeniden başlatın");
+      }
       await loop(runId);
     } catch (err) {
       // Callers do not await start(): an escaping rejection would take the server down.

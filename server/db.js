@@ -440,6 +440,9 @@ db.exec(`
     cost_usd REAL NOT NULL DEFAULT 0, started_at TEXT, ended_at TEXT,
     FOREIGN KEY (run_id) REFERENCES flow_runs(id) ON DELETE CASCADE);
   CREATE INDEX IF NOT EXISTS idx_flow_steps_run ON flow_steps(run_id, id);
+  CREATE TABLE IF NOT EXISTS flow_approvals (
+    repo TEXT NOT NULL, flow TEXT NOT NULL, hash TEXT NOT NULL, approved_at TEXT NOT NULL,
+    PRIMARY KEY (repo, flow, hash));
   CREATE TABLE IF NOT EXISTS flow_script_approvals (
     repo TEXT NOT NULL, command TEXT NOT NULL, approved_at TEXT NOT NULL, PRIMARY KEY (repo, command));
   CREATE INDEX IF NOT EXISTS idx_dashboard_runs_session ON dashboard_runs(session_id);
@@ -589,6 +592,13 @@ try {
   db.prepare("ALTER TABLE agents ADD COLUMN workflow_phase TEXT").run();
 }
 db.prepare("CREATE INDEX IF NOT EXISTS idx_agents_workflow ON agents(workflow_run_id)").run();
+
+// Migrate: the content hash a flow run was approved (or is waiting for approval) under.
+try {
+  db.prepare("SELECT flow_hash FROM flow_runs LIMIT 1").get();
+} catch {
+  db.prepare("ALTER TABLE flow_runs ADD COLUMN flow_hash TEXT").run();
+}
 
 // Migrate: add the 1h-ephemeral cache-write rate column to model_pricing.
 // Older DBs predate the 5m/1h cache-write split. ADD COLUMN defaults every

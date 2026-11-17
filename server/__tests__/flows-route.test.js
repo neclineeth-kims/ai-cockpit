@@ -18,6 +18,10 @@ const { createApp, startServer } = require("../index");
 const { db } = require("../db");
 const { createRunner } = require("../lib/flows/runner");
 const router = require("../routes/flows");
+const store = require("../lib/flows/store");
+const { flowHash } = require("../lib/flows/approval");
+const { parseFlow } = require("../lib/flows/parse");
+const { workRepo } = require("../lib/plan");
 
 const FLOW = `
 ad: demo
@@ -95,10 +99,22 @@ async function settle(id) {
   }
   throw new Error("akış 2 sn içinde durmadı");
 }
-async function begin(script = writeU, flow) {
+const yamlOf = (cwd) =>
+  fs.readFileSync(path.join(cwd, ".ai-cockpit", "akislar", "demo.yaml"), "utf8");
+function approve(cwd) {
+  const text = yamlOf(cwd);
+  store.approveFlow(
+    db,
+    fs.realpathSync(workRepo(cwd)),
+    "demo",
+    flowHash(cwd, text, parseFlow(text))
+  );
+}
+async function begin(script = writeU, flow, { approved = true } = {}) {
   const ag = fakeAgents(script);
   router.__setRunner(createRunner({ db, agents: ag }));
   const cwd = mkRepo(flow);
+  if (approved) approve(cwd);
   const r = await call("", "POST", { cwd, flow: "demo", task: "t" });
   assert.equal(r.status, 201);
   const { run } = await r.json();
@@ -187,6 +203,7 @@ test("stop marks stopped", async () => {
   const { id } = await (async () => {
     router.__setRunner(createRunner({ db, agents: fakeAgents(() => ({ hang: true })) }));
     const cwd = mkRepo();
+    approve(cwd);
     return (await (await call("", "POST", { cwd, flow: "demo" })).json()).run;
   })();
   const r = await call(`/${id}/stop`, "POST");
@@ -230,4 +247,70 @@ test("file endpoint serves run files and rejects outside paths", async () => {
   fs.symlinkSync(path.join(cwd, "secret.txt"), path.join(cwd, ".ai-cockpit", "run", "l.md"));
   assert.equal((await f("l.md")).status, 400);
   assert.equal((await f("yok.md")).status, 404);
+});
+
+const decisionsOf = async (cwd) =>
+  (
+    await (
+      await fetch(
+        `http://127.0.0.1:${server.address().port}/api/decisions?project=${encodeURIComponent(cwd)}&status=pending`
+      )
+    ).json()
+  ).decisions;
+
+test("unapproved flow starts at approval gate and shows steps in Kararlar", async () => {
+  const { ag, cwd, run } = await begin(writeU, FLOW, { approved: false });
+  assert.equal(run.status, "gate");
+  assert.equal(ag.calls.length, 0);
+  assert.deepEqual(
+    run.steps.map((s) => `${s.step}#${s.round}:${s.status}:${s.note}`),
+    ["akis-onayi#1:gate:Akış onayı"]
+  );
+  const [g] = await decisionsOf(cwd);
+  assert.equal(g.message, "Akış onayı: demo\n- uygula (agent) claude\n- kabul (gate)");
+  assert.equal(g.metadata.gate, "flow-approval");
+  assert.deepEqual(g.metadata.shown, []);
+  assert.deepEqual(g.metadata.sendBack, []);
+});
+
+test("approve runs the flow and the next run of same content needs no approval", async () => {
+  const { ag, cwd, id } = await begin(writeU, FLOW, { approved: false });
+  assert.equal((await gate(id, { action: "approve" })).status, 200);
+  assert.equal((await settle(id)).status, "gate");
+  assert.equal(ag.calls.length, 1);
+  await call(`/${id}/stop`, "POST");
+  const r = await call("", "POST", { cwd, flow: "demo" });
+  assert.equal((await settle((await r.json()).run.id)).steps[0].step, "uygula");
+});
+
+test("changed role file needs approval again", async () => {
+  const { cwd, id } = await begin(writeU, FLOW, { approved: false });
+  await gate(id, { action: "approve" });
+  await settle(id);
+  await call(`/${id}/stop`, "POST");
+  fs.writeFileSync(path.join(cwd, "roller", "r.md"), "ROL2");
+  const r = await call("", "POST", { cwd, flow: "demo" });
+  assert.equal((await settle((await r.json()).run.id)).steps[0].step, "akis-onayi");
+});
+
+test("file changed after approval fails the run at start", async () => {
+  const { ag, cwd, id } = await begin(writeU, FLOW, { approved: false });
+  fs.writeFileSync(path.join(cwd, "roller", "r.md"), "KOTU");
+  await gate(id, { action: "approve" });
+  const run = await settle(id);
+  assert.equal(run.status, "failed");
+  assert.equal(run.steps.at(-1).note, "Akış dosyası onaydan sonra değişti; yeniden başlatın");
+  assert.equal(ag.calls.length, 0);
+});
+
+test("send_back on approval gate is 400", async () => {
+  const { id } = await begin(writeU, FLOW, { approved: false });
+  assert.equal((await gate(id, { action: "send_back", step: "uygula" })).status, 400);
+  assert.equal((await getRun(id)).status, "gate");
+});
+
+test("missing role file is 400", async () => {
+  const cwd = mkRepo();
+  fs.rmSync(path.join(cwd, "roller", "r.md"));
+  assert.equal((await call("", "POST", { cwd, flow: "demo" })).status, 400);
 });

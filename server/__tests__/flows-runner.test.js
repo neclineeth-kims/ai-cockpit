@@ -144,24 +144,12 @@ it("cost cap stops at gate", async () => {
   assert.equal(got.cost_usd, 2);
 });
 
-it("script needs approval first time", async () => {
-  const flow = [{ id: "s", tur: "script", komut: "npm test", zaman_asimi_dk: 1 }];
+it("script step runs without a gate of its own", async () => {
+  const run = mkRun([{ id: "s", tur: "script", komut: "npm test", zaman_asimi_dk: 1 }]);
   const ag = fakeAgents();
-  const runner = createRunner({ db, agents: ag });
-  const run = mkRun(flow);
-  await runner.start(run.id);
-  let got = store.getRun(db, run.id);
-  assert.equal(got.status, "gate");
-  assert.equal(got.steps[0].note, "Script onayı: npm test");
-  assert.equal(ag.calls.length, 0);
-  store.approveScript(db, cwd, "npm test");
-  await runner.onGateAnswered(run.id);
-  got = store.getRun(db, run.id);
-  assert.equal(got.status, "done");
+  await createRunner({ db, agents: ag }).start(run.id);
+  assert.equal(store.getRun(db, run.id).status, "done");
   assert.equal(ag.calls.length, 1);
-  const second = mkRun(flow);
-  await runner.start(second.id);
-  assert.equal(store.getRun(db, second.id).status, "done");
 });
 
 it("gate step ends the loop and onGateAnswered continues", async () => {

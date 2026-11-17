@@ -90,11 +90,12 @@ it("sums cost on step and run", () => {
   assert.equal(got.steps[0].cost_usd, 0.75);
 });
 
-it("script approval is per repo and command", () => {
-  assert.equal(store.isScriptApproved(db, "/r", "npm test"), false);
-  store.approveScript(db, "/r", "npm test");
-  store.approveScript(db, "/r", "npm test");
-  assert.equal(store.isScriptApproved(db, "/r", "npm test"), true);
-  assert.equal(store.isScriptApproved(db, "/r2", "npm test"), false);
-  assert.equal(store.isScriptApproved(db, "/r", "npm run other"), false);
+it("flow approval is per repo, flow and hash", () => {
+  assert.equal(store.isFlowApproved(db, "/r", "f", "h1"), false);
+  store.approveFlow(db, "/r", "f", "h1");
+  store.approveFlow(db, "/r", "f", "h1");
+  assert.equal(store.isFlowApproved(db, "/r", "f", "h1"), true);
+  assert.equal(store.isFlowApproved(db, "/r2", "f", "h1"), false);
+  assert.equal(store.isFlowApproved(db, "/r", "g", "h1"), false);
+  assert.equal(store.isFlowApproved(db, "/r", "f", "h2"), false);
 });

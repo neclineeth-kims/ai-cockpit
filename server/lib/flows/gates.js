@@ -3,11 +3,13 @@
  * @description Gate steps of flow (akislar) runs: Kararlar entries for open gates and answering them.
  * @author Caglar Ulkuderner
  */
+const fs = require("node:fs");
 const store = require("./store");
 
 const ROUND_LIMIT = "Tur sınırı aşıldı";
 const COST_CAP = "Maliyet tavanı aşıldı";
-const SCRIPT_PREFIX = "Script onayı: ";
+const APPROVAL_STEP = "akis-onayi";
+const APPROVAL_NOTE = "Akış onayı";
 const now = () => new Date().toISOString();
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -16,8 +18,8 @@ const gateKind = (note) =>
     ? "round"
     : note === COST_CAP
       ? "cost"
-      : note?.startsWith(SCRIPT_PREFIX)
-        ? "script"
+      : note === APPROVAL_NOTE
+        ? "flow-approval"
         : "gate";
 
 // Gate answers are stored in the row's note as JSON; the original note lives on in `gate`.
@@ -36,6 +38,16 @@ function sendBackTargets(step, kind) {
   return [];
 }
 
+// Lists every step so the person sees what the flow will run before approving it.
+function approvalMessage(flow) {
+  const lines = flow.adimlar.map((s) => {
+    const detail =
+      s.tur === "agent" ? [s.ajan, s.model] : s.tur === "script" ? [`komut: ${s.komut}`] : [];
+    return ["- " + s.id, `(${s.tur})`, ...detail.filter(Boolean)].join(" ");
+  });
+  return [`Akış onayı: ${flow.ad}`, ...lines].join("\n");
+}
+
 function toDecision(row) {
   const flow = JSON.parse(row.flow_json);
   const step = flow.adimlar.find((s) => s.id === row.step) || {};
@@ -48,7 +60,10 @@ function toDecision(row) {
     agent: "cockpit",
     reason: "confirmation",
     header: flow.ad,
-    message: step.mesaj || original || "Kabul bekleniyor",
+    message:
+      gateKind(original) === "flow-approval"
+        ? approvalMessage(flow)
+        : step.mesaj || original || "Kabul bekleniyor",
     options: [],
     multiSelect: false,
     askedAt: row.started_at,
@@ -62,6 +77,7 @@ function toDecision(row) {
       sendBack: sendBackTargets(step, gateKind(original)),
     },
   };
+  if (gateKind(original) === "flow-approval") decision.metadata.gate = "flow-approval";
   if (answer) {
     decision.status = "resolved";
     decision.payload = { answer: answer.answer, note: answer.note };
@@ -92,17 +108,22 @@ function answerGate(db, runner, runId, body = {}) {
   if (!run) throw fail(404, "Koşu bulunamadı");
   if (run.status !== "gate") throw fail(409, "Koşu kapıda değil");
   const row = [...run.steps].reverse().find((s) => s.status === "gate");
-  const step = run.flow.adimlar.find((s) => s.id === row?.step);
+  const kind = gateKind(row?.note);
+  const step =
+    kind === "flow-approval"
+      ? { id: APPROVAL_STEP }
+      : run.flow.adimlar.find((s) => s.id === row?.step);
   if (!step) throw fail(409, "Açık kapı bulunamadı");
-  const kind = gateKind(row.note);
   const { action } = body;
   let next;
   if (action === "approve") {
-    if (kind === "script") store.approveScript(db, run.repo, step.komut);
+    if (kind === "flow-approval")
+      store.approveFlow(db, fs.realpathSync(run.repo), run.flow.ad, run.flow_hash);
     if (kind === "cost")
       store.setRun(db, runId, { cost_cap_usd: run.cost_cap_usd + run.flow.maliyet_tavani });
     const ids = run.flow.adimlar.map((s) => s.id);
-    next = kind === "cost" || kind === "script" ? step.id : ids[ids.indexOf(step.id) + 1];
+    next =
+      kind === "cost" ? step.id : kind === "flow-approval" ? ids[0] : ids[ids.indexOf(step.id) + 1];
   } else if (action === "send_back") {
     if (!sendBackTargets(step, kind).includes(body.step))
       throw fail(400, "Bu kapıdan o adıma geri gönderilemez");
@@ -122,4 +143,4 @@ function answerGate(db, runner, runId, body = {}) {
   return store.getRun(db, runId);
 }
 
-module.exports = { flowDecisions, answerGate };
+module.exports = { flowDecisions, answerGate, APPROVAL_STEP, APPROVAL_NOTE };

@@ -149,10 +149,13 @@ test("inceleme-turu runs end to end after install", async () => {
   const r = await call("", "POST", { cwd, flow: "inceleme-turu" });
   assert.equal(r.status, 201);
   const { run } = await r.json();
+  assert.equal((await settle(run.id)).steps[0].step, "akis-onayi");
+  assert.equal((await call(`/${run.id}/gate`, "POST", { action: "approve" })).status, 200);
   const end = await settle(run.id);
   assert.equal(end.status, "gate");
   const rows = end.steps.map((s) => `${s.step}#${s.round}:${s.status}`);
   assert.deepEqual(rows, [
+    "akis-onayi#1:done",
     "incele#1:done",
     "duzelt#1:done",
     "yeniden-incele#1:done",

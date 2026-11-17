@@ -27,12 +27,22 @@ function update(db, table, cols, id, patch) {
   ).run({ ...patch, id });
 }
 
-function createRun(db, { repo, cwd, task, flow }) {
+function createRun(db, { repo, cwd, task, flow, flowHash = null, status = "running" }) {
   const id = crypto.randomUUID();
   db.prepare(
-    `INSERT INTO flow_runs (id, repo, cwd, task, flow, flow_json, status, cost_cap_usd)
-     VALUES (?, ?, ?, ?, ?, ?, 'running', ?)`
-  ).run(id, repo, cwd, task ?? null, flow.ad, JSON.stringify(flow), flow.maliyet_tavani ?? null);
+    `INSERT INTO flow_runs (id, repo, cwd, task, flow, flow_json, status, cost_cap_usd, flow_hash)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    repo,
+    cwd,
+    task ?? null,
+    flow.ad,
+    JSON.stringify(flow),
+    status,
+    flow.maliyet_tavani ?? null,
+    flowHash
+  );
   return db.prepare("SELECT * FROM flow_runs WHERE id = ?").get(id);
 }
 
@@ -117,17 +127,17 @@ function markInterrupted(db) {
   })();
 }
 
-const isScriptApproved = (db, repo, command) =>
+const isFlowApproved = (db, repo, flow, hash) =>
   !!db
-    .prepare("SELECT 1 FROM flow_script_approvals WHERE repo = ? AND command = ?")
-    .get(repo, command);
+    .prepare("SELECT 1 FROM flow_approvals WHERE repo = ? AND flow = ? AND hash = ?")
+    .get(repo, flow, hash);
 
-const approveScript = (db, repo, command) =>
+const approveFlow = (db, repo, flow, hash) =>
   db
     .prepare(
-      `INSERT OR IGNORE INTO flow_script_approvals (repo, command, approved_at) VALUES (?, ?, ${NOW})`
+      `INSERT OR IGNORE INTO flow_approvals (repo, flow, hash, approved_at) VALUES (?, ?, ?, ${NOW})`
     )
-    .run(repo, command);
+    .run(repo, flow, hash);
 
 module.exports = {
   createRun,
@@ -142,6 +152,6 @@ module.exports = {
   executedRounds,
   addCost,
   markInterrupted,
-  isScriptApproved,
-  approveScript,
+  isFlowApproved,
+  approveFlow,
 };

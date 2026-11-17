@@ -9,7 +9,8 @@ const { db } = require("../db");
 const store = require("../lib/flows/store");
 const { parseFlow } = require("../lib/flows/parse");
 const { createRunner } = require("../lib/flows/runner");
-const { answerGate } = require("../lib/flows/gates");
+const { answerGate, APPROVAL_STEP, APPROVAL_NOTE } = require("../lib/flows/gates");
+const { flowHash, flowPath } = require("../lib/flows/approval");
 const { workRepo, checkoutRoot } = require("../lib/plan");
 
 const router = Router();
@@ -42,15 +43,19 @@ function loadFlow(cwd, name) {
   if (!/^[a-z0-9-]+$/.test(name || "")) throw fail(400, "Akış adı yalnız a-z, 0-9 ve - içerebilir");
   let text;
   try {
-    text = fs.readFileSync(path.join(cwd, ".ai-cockpit", "akislar", `${name}.yaml`), "utf8");
+    text = fs.readFileSync(flowPath(cwd, name), "utf8");
   } catch {
     throw fail(404, "Akış dosyası bulunamadı");
   }
+  let flow;
   try {
-    return parseFlow(text);
+    flow = parseFlow(text);
   } catch (err) {
     throw fail(400, err.code === "EFLOW" ? err.message : "Akış dosyası okunamadı");
   }
+  // The runner re-reads the file by flow name, so the two must agree.
+  if (flow.ad !== name) throw fail(400, "Akışın ad alanı dosya adıyla aynı olmalı");
+  return { flow, hash: flowHash(cwd, text, flow) };
 }
 
 // Starts a new round at `step`; the run's work goes on in the background.
@@ -124,11 +129,24 @@ router.post(
   wrap((req, res) => {
     const cwd = str(req.body?.cwd);
     if (!cwd || !checkoutRoot(cwd)) throw fail(400, "cwd bir git dizini olmalı");
-    const flow = loadFlow(cwd, req.body.flow);
+    const { flow, hash } = loadFlow(cwd, req.body.flow);
     if (store.activeRunForCwd(db, cwd)) throw fail(409, "Bu dizinde zaten etkin bir koşu var");
-    const run = store.createRun(db, { repo: workRepo(cwd), cwd, task: str(req.body.task), flow });
+    const repo = workRepo(cwd);
+    const approved = store.isFlowApproved(db, fs.realpathSync(repo), flow.ad, hash);
+    const run = store.createRun(db, {
+      repo,
+      cwd,
+      task: str(req.body.task),
+      flow,
+      flowHash: hash,
+      status: approved ? "running" : "gate",
+    });
     store.setRun(db, run.id, { current_step: flow.adimlar[0].id });
-    runner.start(run.id);
+    if (approved) runner.start(run.id);
+    else
+      store.finishStep(db, store.startStep(db, run.id, APPROVAL_STEP, "gate").id, {
+        note: APPROVAL_NOTE,
+      });
     res.status(201).json({ run: store.getRun(db, run.id) });
   })
 );
