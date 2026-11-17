@@ -330,8 +330,10 @@ function listProjects(db) {
                       WHERE tool_name IN ('AskUserQuestion','ExitPlanMode','Write','Edit','MultiEdit'))`
     )
     .all();
+  // Flow runs count too: a flow can wait at a gate in a repo no agent session has touched yet.
+  const flows = db.prepare("SELECT cwd, COALESCE(ended_at, started_at) AS at FROM flow_runs").all();
   const last = new Map();
-  for (const r of rows) {
+  for (const r of [...rows, ...flows]) {
     const root = workRepo(r.cwd);
     if (!root || root === os.homedir()) continue;
     if (!last.has(root) || (r.at || "") > last.get(root)) last.set(root, r.at || "");

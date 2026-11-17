@@ -169,3 +169,14 @@ test("projects: grouped by repo, newest first", async () => {
   assert.equal(projects[0].lastAt, "2099-01-01T00:00:00Z");
   assert.ok(projects[1].lastAt > "2020-01-01T00:00:00Z");
 });
+
+test("projects: a repo with only a flow run is listed", async () => {
+  const flowOnly = path.join(root, "flow-only");
+  fs.mkdirSync(path.join(flowOnly, ".git"), { recursive: true });
+  db.prepare(
+    `INSERT INTO flow_runs (id, repo, cwd, flow, flow_json, status, started_at)
+     VALUES ('fr1', ?, ?, 'f', '{"ad":"f","adimlar":[]}', 'gate', '2098-01-01T00:00:00Z')`
+  ).run(flowOnly, flowOnly);
+  const { projects } = await (await get("/projects")).json();
+  assert.ok(projects.some((p) => p.name === "flow-only"));
+});
