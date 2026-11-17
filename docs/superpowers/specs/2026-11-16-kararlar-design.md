@@ -7,7 +7,7 @@ Esin kaynağı: [AG-UI](https://github.com/ag-ui-protocol/ag-ui) (MIT), özellik
 
 Ajanlar çalışırken soru soruyor (Claude Code `AskUserQuestion`), plan onayı istiyor (`ExitPlanMode`) ve tasarım dosyaları üretiyor (spec, HTML taslak, kanvas). Bunların hepsi şu an oturum dökümlerinin içinde kayboluyor. Bir hafta sonra "bunu neden böyle yaptık" diye sorduğunda cevabı bulmak için oturum oturum gezmek gerekiyor; ajan da aynı soruyu yeniden soruyor.
 
-Kokpitin veritabanında bu veri zaten var: hook olayları `events.data` içinde `tool_input.questions`, `tool_input.answers`, `tool_input.annotations` ve `tool_input.plan` olarak saklanıyor (16 Kasım itibarıyla 707 cevaplanmış soru, 15 plan onayı). Eksik olan onu okunur kılan ekran.
+Bu veri makinede zaten var. Kokpitin `events` tablosu hangi oturumda soru, plan onayı ve dosya yazımı olduğunu gösteriyor (707 soru, 15 plan onayı), ama 17 Kasım ölçümünde bu olayların büyük çoğunluğu içeriksiz içe aktarım kaydı (`{"imported": true}`). İçeriğin tamamı Claude Code oturum dökümlerinde (`sessions.transcript_path`): soru, seçenekler, cevap, not, plan metni, onay ya da red. Kararlar bu dökümlerden okunur; ayrıntı plan dosyasındaki "Veri kaynağı" bölümünde. Eksik olan onu okunur kılan ekran.
 
 AG-UI bu işin ortak dilini tanımlıyor: ajan bir **interrupt** ile durur (`reason`: `input_required`, `confirmation`, `tool_call`), istemci bir **resume** ile cevap verir (`status`, `payload`). Bu modeli içeride kullanırsak kendi verimiz standart bir şekle oturur ve ileride AG-UI konuşan ajanlar (Mastra, LangGraph, Claude Agent SDK bağdaştırıcıları) aynı ekrana bağlanabilir.
 
@@ -35,7 +35,7 @@ AG-UI bu işin ortak dilini tanımlıyor: ajan bir **interrupt** ile durur (`rea
 
 ```ts
 type Decision = {
-  id: string;                 // `${eventId}:${index}`
+  id: string;                 // `${sessionId}:${toolUseId}:${index}`
   project: string;            // cwd'den çözülen depo (plan keşfindeki workRepo)
   sessionId: string;
   agent: "claude" | "codex" | "cursor" | "ag-ui";
@@ -53,13 +53,13 @@ type Decision = {
 
 | Kaynak | reason | status kuralı |
 | --- | --- | --- |
-| `AskUserQuestion` PreToolUse | `input_required` | eşleşen PostToolUse yoksa `pending` |
-| `AskUserQuestion` PostToolUse | `input_required` | `answers` içinde cevap varsa `resolved`, yoksa `cancelled` |
-| `ExitPlanMode` Pre/Post | `plan_approval` | PostToolUse varsa `resolved` (onaylandı), oturum sonraki istemle devam ettiyse ve Post yoksa `cancelled` |
+| `AskUserQuestion` tool_use, sonucu yok | `input_required` | oturum canlı ve dökümün son satırıysa `pending`, değilse `cancelled` |
+| `AskUserQuestion` tool_result | `input_required` | `toolUseResult.answers` içinde cevap varsa `resolved`; `is_error` ise `cancelled` |
+| `ExitPlanMode` tool_result | `plan_approval` | onay `resolved`, red (`is_error`) `cancelled` ve kullanıcının notu `payload.note` |
 
 AG-UI dışa aktarımında: `reason` aynen (`plan_approval` -> `confirmation` + `metadata.kind = "plan"`), `responseSchema` seçeneklerden üretilir (`enum`), cevap `resume: [{ interruptId, status, payload }]` olarak yazılır.
 
-"Bekliyor" ile "terk edildi" ayrımı: PreToolUse var, PostToolUse yok ve oturumda daha yeni bir olay varsa `cancelled`; oturumun son olayı buysa `pending`.
+Eşleşme döküm içindeki `tool_use_id` ile yapılır; aynı metinli iki soru karışmaz.
 
 ## Ekran
 
