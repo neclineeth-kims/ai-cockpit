@@ -205,10 +205,8 @@ async function listDecisions(db, { project, status, q, limit = 200 } = {}) {
   const needle = q && q.toLowerCase();
   let all = [];
   for (const r of rows) {
-    if (project) {
-      if (!repoOf.has(r.cwd)) repoOf.set(r.cwd, r.cwd ? workRepo(r.cwd) : null);
-      if (repoOf.get(r.cwd) !== project) continue;
-    }
+    if (!repoOf.has(r.cwd)) repoOf.set(r.cwd, r.cwd ? workRepo(r.cwd) : null);
+    if (project && repoOf.get(r.cwd) !== project) continue;
     let scan;
     try {
       scan = await scanTranscript(r.transcript_path);
