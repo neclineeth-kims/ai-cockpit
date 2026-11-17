@@ -355,18 +355,26 @@ export const cockpit = {
     }>(`/community/tasks/${n}/pr`),
   flows: (a: { repo?: string; task?: number } = {}) =>
     request<{ runs: FlowRunSummary[] }>(`/flows?${qs(a)}`),
-  flow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}`),
+  flow: (id: string) => request<{ run: FlowRun }>(`/flows/${encodeURIComponent(id)}`),
   startFlow: (a: { task: number; flow: string }) =>
     request<{ run: FlowRun }>("/flows", { method: "POST", ...json(a) }),
   flowGate: (id: string, body: { action: "approve" | "send_back"; step?: string; note?: string }) =>
-    request<{ run: FlowRun }>(`/flows/${id}/gate`, { method: "POST", ...json(body) }),
-  retryFlow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}/retry`, { method: "POST" }),
+    request<{ run: FlowRun }>(`/flows/${encodeURIComponent(id)}/gate`, {
+      method: "POST",
+      ...json(body),
+    }),
+  retryFlow: (id: string) =>
+    request<{ run: FlowRun }>(`/flows/${encodeURIComponent(id)}/retry`, { method: "POST" }),
   restartFlow: (id: string, step: string) =>
-    request<{ run: FlowRun }>(`/flows/${id}/restart`, { method: "POST", ...json({ step }) }),
-  stopFlow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}/stop`, { method: "POST" }),
+    request<{ run: FlowRun }>(`/flows/${encodeURIComponent(id)}/restart`, {
+      method: "POST",
+      ...json({ step }),
+    }),
+  stopFlow: (id: string) =>
+    request<{ run: FlowRun }>(`/flows/${encodeURIComponent(id)}/stop`, { method: "POST" }),
   /** Run files are plain text, so this reads the body as text (request() would parse JSON). */
   flowFile: async (id: string, path: string) =>
-    (await fetchBlob(`/flows/${id}/file?${qs({ path })}`)).text(),
+    (await fetchBlob(`/flows/${encodeURIComponent(id)}/file?${qs({ path })}`)).text(),
   flowTemplates: () => request<{ templates: FlowTemplate[] }>("/flows/templates"),
   installFlows: () =>
     request<{ copied: string[]; skipped: string[] }>("/flows/install", {
