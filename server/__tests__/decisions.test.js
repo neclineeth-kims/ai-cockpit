@@ -441,7 +441,11 @@ test("brief decisions follow the task area", async () => {
   briefSession(
     proj,
     ["server/lib/a.js"],
-    [{ ts: "2026-03-02T00:00:00Z", question: "Sunucu?", answer: "Evet", note: "acil" }]
+    [
+      { ts: "2026-03-01T01:00:00Z", question: "Sunucu?", answer: "Evet", note: "acil" },
+      // same session, a day after its last write in the area: another piece of work
+      { ts: "2026-03-02T00:00:00Z", question: "Baska repo?", answer: "Evet" },
+    ]
   );
   briefSession(
     proj,
@@ -449,7 +453,7 @@ test("brief decisions follow the task area", async () => {
     [{ ts: "2026-03-03T00:00:00Z", question: "Istemci?", answer: "Hayir" }]
   );
   const out = await decisionsForBrief(db, { project: proj, area: ["server/**"] });
-  assert.deepEqual(out, ["- 2026-03-02 [H] Sunucu? -> Evet (not: acil)"]);
+  assert.deepEqual(out, ["- 2026-03-01 [H] Sunucu? -> Evet (not: acil)"]);
 });
 
 test("brief decisions without area take last 20, newest first", async () => {

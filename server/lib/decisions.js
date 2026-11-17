@@ -315,6 +315,7 @@ async function listDesigns(db, { project }) {
 }
 
 const BRIEF_BYTES = 4096;
+const NEAR_MS = 3 * 3_600_000;
 const oneLine = (v) => String(v).replace(/\s*\n\s*/g, " ");
 
 /** Answered questions and approved plans earlier sessions made in a task's area, as brief lines (newest first, <= 4 KB). */
@@ -339,15 +340,23 @@ async function decisionsForBrief(db, { project, area }) {
       } catch {
         continue; // transcript missing or unreadable
       }
-      const inArea = scan.writes.some((w) => {
-        const { repo, root } = resolve(w.file);
-        const rel = repo === project && root && repoRelative(w.file, [root]);
-        return rel && areasOverlap(area, [rel]);
-      });
-      if (inArea)
-        all.push(
-          ...decisionsFromScan(scan, { sessionId: r.id, project, live: r.status === "active" })
-        );
+      const times = scan.writes
+        .filter((w) => {
+          const { repo, root } = resolve(w.file);
+          const rel = repo === project && root && repoRelative(w.file, [root]);
+          return rel && areasOverlap(area, [rel]);
+        })
+        .map((w) => Date.parse(w.at));
+      if (!times.length) continue;
+      // A long session may work in several repos: keep only questions asked near its writes in the area.
+      const near = (d) => times.some((t) => Math.abs(t - Date.parse(d.askedAt)) <= NEAR_MS);
+      all.push(
+        ...decisionsFromScan(scan, {
+          sessionId: r.id,
+          project,
+          live: r.status === "active",
+        }).filter(near)
+      );
     }
     all = all.filter((d) => d.status === "resolved");
     all.sort((a, b) => (a.askedAt < b.askedAt ? 1 : a.askedAt > b.askedAt ? -1 : 0));
@@ -360,7 +369,7 @@ async function decisionsForBrief(db, { project, area }) {
       line = `- ${day} Plan onaylandı: ${oneLine(d.header || "başlıksız")}`;
     else {
       const a = d.payload.answer;
-      line = `- ${day} [${oneLine(d.header)}] ${oneLine(d.message)} -> ${oneLine(Array.isArray(a) ? a.join(", ") : a)}`;
+      line = `- ${day} ${d.header ? `[${oneLine(d.header)}] ` : ""}${oneLine(d.message)} -> ${oneLine(Array.isArray(a) ? a.join(", ") : a)}`;
       if (d.payload.note) line += ` (not: ${oneLine(d.payload.note)})`;
     }
     if (Buffer.byteLength([...lines, line].join("\n"), "utf8") > BRIEF_BYTES) break;
