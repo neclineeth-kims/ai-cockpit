@@ -81,7 +81,7 @@ const stepsOf = (id) => store.getRun(db, id).steps.map((s) => `${s.step}#${s.rou
 it("runs agent steps in order and finishes", async () => {
   const run = mkRun([agentStep("a", { cikti: "a.md" }), agentStep("b")]);
   const ag = fakeAgents([{ files: { "a.md": "x" } }, {}]);
-  await createRunner({ db, agents: ag }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: ag }).start(run.id);
   const got = store.getRun(db, run.id);
   assert.equal(got.status, "done");
   assert.ok(got.ended_at);
@@ -91,14 +91,16 @@ it("runs agent steps in order and finishes", async () => {
 
 it("missing output fails step", async () => {
   const run = mkRun([agentStep("a", { cikti: "a.md" })]);
-  await createRunner({ db, agents: fakeAgents() }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: fakeAgents() }).start(run.id);
   assert.deepEqual(stepsOf(run.id), ["a#1:failed"]);
   assert.equal(store.getRun(db, run.id).status, "failed");
 });
 
 it("nonzero exit fails step", async () => {
   const run = mkRun([agentStep("a")]);
-  await createRunner({ db, agents: fakeAgents([{ exitCode: 2 }]) }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: fakeAgents([{ exitCode: 2 }]) }).start(
+    run.id
+  );
   assert.deepEqual(stepsOf(run.id), ["a#1:failed"]);
   assert.equal(store.getRun(db, run.id).status, "failed");
 });
@@ -109,7 +111,9 @@ const ok = { files: { "inceleme.md": "SONUÇ: TAMAM\n" } };
 
 it("DÜZELT goes back to basarisizsa then forward again", async () => {
   const run = mkRun([agentStep("uygula"), agentStep("incele", REVIEW)]);
-  await createRunner({ db, agents: fakeAgents([{}, fix, {}, ok]) }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: fakeAgents([{}, fix, {}, ok]) }).start(
+    run.id
+  );
   assert.deepEqual(stepsOf(run.id), [
     "uygula#1:done",
     "incele#1:done",
@@ -122,7 +126,9 @@ it("DÜZELT goes back to basarisizsa then forward again", async () => {
 
 it("round limit stops at gate", async () => {
   const run = mkRun([agentStep("uygula"), agentStep("incele", { ...REVIEW, en_cok_tur: 2 })]);
-  await createRunner({ db, agents: fakeAgents([{}, fix, {}, fix]) }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: fakeAgents([{}, fix, {}, fix]) }).start(
+    run.id
+  );
   const got = store.getRun(db, run.id);
   assert.equal(got.status, "gate");
   assert.equal(got.current_step, "incele");
@@ -135,7 +141,7 @@ it("cost cap stops at gate", async () => {
   const run = mkRun([agentStep("a"), agentStep("b")], { maliyet_tavani: 1 });
   const ag = fakeAgents();
   ag.cost = 2;
-  await createRunner({ db, agents: ag }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: ag }).start(run.id);
   const got = store.getRun(db, run.id);
   assert.equal(got.status, "gate");
   assert.equal(got.current_step, "b");
@@ -147,7 +153,7 @@ it("cost cap stops at gate", async () => {
 it("script step runs without a gate of its own", async () => {
   const run = mkRun([{ id: "s", tur: "script", komut: "npm test", zaman_asimi_dk: 1 }]);
   const ag = fakeAgents();
-  await createRunner({ db, agents: ag }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: ag }).start(run.id);
   assert.equal(store.getRun(db, run.id).status, "done");
   assert.equal(ag.calls.length, 1);
 });
@@ -158,7 +164,7 @@ it("gate step ends the loop and onGateAnswered continues", async () => {
     agentStep("b"),
   ]);
   const ag = fakeAgents();
-  const runner = createRunner({ db, agents: ag });
+  const runner = createRunner({ db, requireApproval: false, agents: ag });
   await runner.start(run.id);
   assert.equal(store.getRun(db, run.id).status, "gate");
   store.setRun(db, run.id, { current_step: "b" });
@@ -175,7 +181,7 @@ it("prompt contains role, brief, inputs, gate note and output line", async () =>
   ]);
   store.setRun(db, run.id, { gate_note: "NOT" });
   const ag = fakeAgents([{ files: { "a.md": "x" } }]);
-  await createRunner({ db, agents: ag }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: ag }).start(run.id);
   const p = ag.calls[0].prompt;
   assert.ok(p.startsWith("ROL"));
   for (const s of [
@@ -193,18 +199,18 @@ it("prompt contains role, brief, inputs, gate note and output line", async () =>
 it("review step prompt asks for the SONUÇ line", async () => {
   const run = mkRun([agentStep("uygula"), agentStep("incele", REVIEW)]);
   const ag = fakeAgents([{}, ok]);
-  await createRunner({ db, agents: ag }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents: ag }).start(run.id);
   assert.ok(ag.calls[1].prompt.includes('İlk satır "SONUÇ: TAMAM" ya da "SONUÇ: DÜZELT" olsun.'));
 });
 
 it("resume after restart", async () => {
   const run = mkRun([agentStep("a")]);
-  const first = createRunner({ db, agents: fakeAgents([{ hang: true }]) });
+  const first = createRunner({ db, requireApproval: false, agents: fakeAgents([{ hang: true }]) });
   first.start(run.id);
   await new Promise((r) => setImmediate(r));
   assert.deepEqual(stepsOf(run.id), ["a#1:running"]);
   const ag = fakeAgents();
-  await createRunner({ db, agents: ag }).resumeAll();
+  await createRunner({ db, requireApproval: false, agents: ag }).resumeAll();
   assert.deepEqual(stepsOf(run.id), ["a#1:interrupted", "a#2:done"]);
   assert.equal(store.getRun(db, run.id).status, "done");
   assert.equal(ag.calls.length, 1);
@@ -216,7 +222,7 @@ it("second start while active is a no-op, stop kills and marks stopped", async (
   let killed = 0;
   const orig = ag.runAgent;
   ag.runAgent = (o) => ({ ...orig(o), kill: () => killed++ });
-  const runner = createRunner({ db, agents: ag });
+  const runner = createRunner({ db, requireApproval: false, agents: ag });
   runner.start(run.id);
   await runner.start(run.id);
   await new Promise((r) => setImmediate(r));
@@ -248,7 +254,7 @@ it("cost cap gate row does not count toward en_cok_tur", async () => {
     c.n === 1 ? { files: { "inceleme.md": "SONUÇ: DÜZELT\n" } } : {}
   );
   agents.cost = 2;
-  const runner = createRunner({ db, agents });
+  const runner = createRunner({ db, requireApproval: false, agents });
   await runner.start(run.id);
   assert.equal(store.getRun(db, run.id).status, "gate");
   // the cap gate held incele before it ran: one row, zero executed rounds
@@ -265,7 +271,7 @@ it("an unexpected error marks the run failed instead of rejecting", async () => 
   agents.runAgent = () => {
     throw new Error("boom");
   };
-  await createRunner({ db, agents }).start(run.id);
+  await createRunner({ db, requireApproval: false, agents }).start(run.id);
   assert.equal(store.getRun(db, run.id).status, "failed");
 });
 
@@ -278,4 +284,12 @@ it("runScript timeout kills the whole process group", async () => {
   assert.equal(res.exitCode, 124);
   await new Promise((r) => setTimeout(r, 2000));
   assert.equal(fs.existsSync(marker), false);
+});
+
+it("a run without an approval hash does not start by default", async () => {
+  const run = mkRun([agentStep("a")]);
+  const agents = fakeAgents();
+  await createRunner({ db, agents }).start(run.id);
+  assert.equal(store.getRun(db, run.id).status, "gate");
+  assert.equal(agents.calls.length, 0);
 });

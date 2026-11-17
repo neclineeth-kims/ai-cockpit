@@ -40,7 +40,8 @@ function keepPreviousOutput(run, step, previousRound) {
   fs.renameSync(file, path.join(dir, `${name}.tur${previousRound}${ext || ".md"}`));
 }
 
-function createRunner({ db, agents = require("./agents") }) {
+// requireApproval=false is for unit tests that build runs straight from the store.
+function createRunner({ db, agents = require("./agents"), requireApproval = true }) {
   const active = new Set();
   const kills = new Map();
 
@@ -196,7 +197,8 @@ function createRunner({ db, agents = require("./agents") }) {
     try {
       const run = store.getRun(db, runId);
       // Every start path (new, resume, retry, restart) must hold an approval for exactly this content.
-      if (run?.flow_hash && !approved(run)) {
+      // A run without a hash (older rows, direct store use) counts as unapproved.
+      if (run && requireApproval && (!run.flow_hash || !approved(run))) {
         return setRun(runId, { status: "gate" });
       }
       if (run?.flow_hash && changedSinceApproval(run)) {

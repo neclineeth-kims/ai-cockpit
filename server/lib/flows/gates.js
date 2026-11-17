@@ -42,7 +42,12 @@ function sendBackTargets(step, kind) {
 function approvalMessage(flow) {
   const lines = flow.adimlar.map((s) => {
     const detail =
-      s.tur === "agent" ? [s.ajan, s.model] : s.tur === "script" ? [`komut: ${s.komut}`] : [];
+      // JSON-quoted so a multi-line command or model cannot fake extra step lines in the approval text
+      s.tur === "agent"
+        ? [s.ajan, s.model && JSON.stringify(s.model)]
+        : s.tur === "script"
+          ? [`komut: ${JSON.stringify(s.komut)}`]
+          : [];
     return ["- " + s.id, `(${s.tur})`, ...detail.filter(Boolean)].join(" ");
   });
   return [`Akış onayı: ${flow.ad}`, ...lines].join("\n");
