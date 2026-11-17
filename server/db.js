@@ -426,6 +426,22 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_events_tool_name ON events(tool_name) WHERE tool_name IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_agents_session_type ON agents(session_id, type);
   CREATE INDEX IF NOT EXISTS idx_dashboard_runs_started ON dashboard_runs(started_at DESC);
+
+  -- Akislar (flows) engine state: one run per flow execution, one row per step round.
+  CREATE TABLE IF NOT EXISTS flow_runs (
+    id TEXT PRIMARY KEY, repo TEXT NOT NULL, cwd TEXT NOT NULL, task TEXT, flow TEXT NOT NULL,
+    flow_json TEXT NOT NULL, status TEXT NOT NULL, current_step TEXT, gate_note TEXT,
+    cost_usd REAL NOT NULL DEFAULT 0, cost_cap_usd REAL,
+    started_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')), ended_at TEXT);
+  CREATE INDEX IF NOT EXISTS idx_flow_runs_cwd ON flow_runs(cwd, status);
+  CREATE TABLE IF NOT EXISTS flow_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, step TEXT NOT NULL, round INTEGER NOT NULL,
+    status TEXT NOT NULL, exit_code INTEGER, session_id TEXT, log_path TEXT, note TEXT,
+    cost_usd REAL NOT NULL DEFAULT 0, started_at TEXT, ended_at TEXT,
+    FOREIGN KEY (run_id) REFERENCES flow_runs(id) ON DELETE CASCADE);
+  CREATE INDEX IF NOT EXISTS idx_flow_steps_run ON flow_steps(run_id, id);
+  CREATE TABLE IF NOT EXISTS flow_script_approvals (
+    repo TEXT NOT NULL, command TEXT NOT NULL, approved_at TEXT NOT NULL, PRIMARY KEY (repo, command));
   CREATE INDEX IF NOT EXISTS idx_dashboard_runs_session ON dashboard_runs(session_id);
 
   -- Rules-based alerting engine. Rules are evaluated server-side: event-driven
