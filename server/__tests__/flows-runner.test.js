@@ -280,3 +280,14 @@ it("an unexpected error marks the run failed instead of rejecting", async () => 
   await createRunner({ db, agents }).start(run.id);
   assert.equal(store.getRun(db, run.id).status, "failed");
 });
+
+it("runScript timeout kills the whole process group", async () => {
+  const logPath = path.join(root, "log", "t.log");
+  const marker = path.join(root, "child-alive");
+  // the grandchild would write the marker after 1.5 s if it survived the group kill
+  const komut = `sh -c 'sleep 1.5; touch ${marker}' & sleep 30`;
+  const res = await realAgents.runScript({ komut, cwd: root, logPath, timeoutMs: 300 }).promise;
+  assert.equal(res.exitCode, 124);
+  await new Promise((r) => setTimeout(r, 2000));
+  assert.equal(fs.existsSync(marker), false);
+});

@@ -134,3 +134,10 @@ adimlar:
     /adimlar\[1\]\.basarisizsa için cikti gerekli/
   );
 });
+
+it("rejects step ids that are not plain names", () => {
+  assert.throws(
+    () => parseFlow("ad: x\nadimlar:\n  - { id: ../../x, tur: gate, gosterilen: [] }\n"),
+    /adimlar\[0\]\.id yalnız harf/
+  );
+});

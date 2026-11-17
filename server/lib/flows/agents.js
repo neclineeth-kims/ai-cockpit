@@ -11,16 +11,31 @@ const POLL_MS = 2000;
 const TIMEOUT_EXIT = 124;
 
 // Spawns a command, streams stdout+stderr into logPath, resolves with its exit code.
+// Kills the child's whole process group (npm test spawns its own children), SIGKILL after a grace period.
+function killGroup(child) {
+  const send = (sig) => {
+    try {
+      if (process.platform === "win32") child.kill(sig);
+      else process.kill(-child.pid, sig);
+    } catch {
+      /* already gone */
+    }
+  };
+  send("SIGTERM");
+  setTimeout(() => send("SIGKILL"), 5000).unref();
+}
+
 function spawnLogged(cmd, args, opts, logPath, timeoutMs) {
   fs.mkdirSync(path.dirname(logPath), { recursive: true });
   const log = fs.createWriteStream(logPath);
-  const child = spawn(cmd, args, opts);
+  const child = spawn(cmd, args, { ...opts, detached: process.platform !== "win32" });
   child.stdout.pipe(log, { end: false });
   child.stderr.pipe(log, { end: false });
+  let timedOut = false;
   const promise = new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      child.kill("SIGTERM");
-      resolve({ exitCode: TIMEOUT_EXIT });
+      timedOut = true;
+      killGroup(child);
     }, timeoutMs);
     child.on("error", (err) => {
       clearTimeout(timer);
@@ -29,10 +44,10 @@ function spawnLogged(cmd, args, opts, logPath, timeoutMs) {
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      log.end(() => resolve({ exitCode: code ?? 1 }));
+      log.end(() => resolve({ exitCode: timedOut ? TIMEOUT_EXIT : (code ?? 1) }));
     });
   });
-  return { promise, kill: () => child.kill("SIGTERM") };
+  return { promise, kill: () => killGroup(child) };
 }
 
 function runClaude({ prompt, cwd, model, timeoutMs }) {
@@ -91,8 +106,9 @@ function runAgent({ ajan, model, prompt, cwd, logPath, timeoutMs }) {
     model,
     "--agent",
     "build",
-    "--dangerously-skip-permissions",
-    prompt,
+    "--auto", // opencode 1.19 name for auto-approving tool permissions; runs only in the task worktree
+    // A role file may start with "---" front matter: never let the message parse as an option.
+    prompt.startsWith("-") ? `\n${prompt}` : prompt,
   ];
   const { promise, kill } = spawnLogged("opencode", args, { cwd }, logPath, timeoutMs);
   return { promise: promise.then((r) => ({ ...r, sessionId: null })), kill };

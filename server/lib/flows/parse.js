@@ -44,6 +44,8 @@ function parseFlow(text) {
     const at = `adimlar[${i}]`;
     if (!raw || typeof raw !== "object") fail(`${at} nesne olmalı`);
     if (!isStr(raw.id)) fail(`${at}.id gerekli`);
+    // ids name log files (.ai-cockpit/run/log/<id>-<round>.log): keep them plain
+    if (!/^[a-z0-9_-]+$/i.test(raw.id)) fail(`${at}.id yalnız harf, rakam, - ve _ içerebilir`);
     if (ids.includes(raw.id)) fail(`${at}.id tekrar ediyor: ${raw.id}`);
     if (!TURLER.includes(raw.tur)) fail(`${at}.tur geçersiz (agent, script ya da gate olmalı)`);
     const step = { id: raw.id, tur: raw.tur };
