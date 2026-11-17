@@ -101,6 +101,7 @@ function createApp() {
   app.use("/api/run", runRouter);
   app.use("/api/limits", require("./routes/limits"));
   app.use("/api/plan", require("./routes/plan"));
+  app.use("/api/decisions", require("./routes/decisions"));
   app.use("/api/telemetry", require("./routes/telemetry"));
   app.use("/api/community", require("./routes/community"));
   app.use("/api/prices", require("./routes/prices"));
