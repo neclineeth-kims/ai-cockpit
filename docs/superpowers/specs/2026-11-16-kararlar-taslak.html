@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kararlar Taslağı</title>
+    <!-- Kararlar sayfası taslağı. Statik, kod yok; örnek veri taslak-veri.json'dan. Developed by Caglar Ulkuderner -->
+    <style>
+      :root {
+        color-scheme: dark;
+        --s0: 6 6 10;
+        --s1: 12 12 20;
+        --s2: 19 19 30;
+        --s3: 26 26 40;
+        --s4: 34 34 51;
+        --bd: 42 42 61;
+        --bdl: 54 54 80;
+        --t1: 243 244 246;
+        --t2: 209 213 219;
+        --t3: 156 163 175;
+        --ac: 99 102 241;
+        --act: 165 180 252;
+        --acm: 99 102 241;
+        --ok: 110 231 183;
+        --bad: 252 165 165;
+        --warn: 252 211 77;
+        --info: 125 211 252;
+        --vio: 196 181 253;
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --s0: 242 242 247;
+        --s1: 255 255 255;
+        --s2: 245 245 247;
+        --s3: 255 255 255;
+        --s4: 236 236 240;
+        --bd: 217 217 224;
+        --bdl: 199 199 208;
+        --t1: 29 29 31;
+        --t2: 44 44 48;
+        --t3: 88 88 94;
+        --ac: 79 70 229;
+        --act: 67 56 202;
+        --acm: 79 70 229;
+        --ok: 6 95 70;
+        --bad: 153 27 27;
+        --warn: 120 53 15;
+        --info: 3 105 161;
+        --vio: 91 33 182;
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) {
+          color-scheme: light;
+          --s0: 242 242 247;
+          --s1: 255 255 255;
+          --s2: 245 245 247;
+          --s3: 255 255 255;
+          --s4: 236 236 240;
+          --bd: 217 217 224;
+          --bdl: 199 199 208;
+          --t1: 29 29 31;
+          --t2: 44 44 48;
+          --t3: 88 88 94;
+          --ac: 79 70 229;
+          --act: 67 56 202;
+          --acm: 79 70 229;
+          --ok: 6 95 70;
+          --bad: 153 27 27;
+          --warn: 120 53 15;
+          --info: 3 105 161;
+          --vio: 91 33 182;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        overflow-x: hidden;
+      }
+      body {
+        background: rgb(var(--s1));
+        color: rgb(var(--t2));
+        font:
+          14px/1.5 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      a {
+        color: rgb(var(--act));
+      }
+      :focus-visible {
+        outline: 2px solid rgb(var(--act));
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      .side {
+        width: 200px;
+        flex: none;
+        background: rgb(var(--s2));
+        border-right: 1px solid rgb(var(--bd));
+        padding: 16px 12px;
+      }
+      .brand {
+        font-weight: 600;
+        color: rgb(var(--t1));
+        margin: 0 8px 16px;
+      }
+      .side a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        color: rgb(var(--t3));
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .side a[aria-current] {
+        background: rgb(var(--acm) / 0.15);
+        color: rgb(var(--act));
+      }
+      .side a:hover {
+        background: rgb(var(--s4));
+      }
+      .dot {
+        background: rgb(var(--ac));
+        color: #fff;
+        border-radius: 99px;
+        font-size: 11px;
+        padding: 0 6px;
+        min-width: 18px;
+        text-align: center;
+      }
+      main {
+        flex: 1;
+        min-width: 0;
+        padding: 24px 20px;
+        max-width: 980px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: rgb(var(--t1));
+        margin: 0 0 12px;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .bar .grow {
+        flex: 1;
+        min-width: 160px;
+      }
+      select,
+      input,
+      button {
+        font: inherit;
+        color: rgb(var(--t1));
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+      input {
+        width: 100%;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgb(var(--s4));
+      }
+      .menu {
+        position: relative;
+      }
+      .menu ul {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        z-index: 5;
+        margin: 0;
+        padding: 4px;
+        list-style: none;
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bdl));
+        border-radius: 8px;
+        min-width: 160px;
+      }
+      .menu li button {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: none;
+      }
+      .menu li button:hover {
+        background: rgb(var(--s4));
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid rgb(var(--bd));
+        overflow-x: auto;
+        scrollbar-width: thin;
+        margin-bottom: 16px;
+      }
+      .tabs [role="tab"] {
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: none;
+        color: rgb(var(--t3));
+        padding: 8px 12px;
+        white-space: nowrap;
+        flex: none;
+      }
+      .tabs [role="tab"][aria-selected="true"] {
+        color: rgb(var(--t1));
+        border-bottom-color: rgb(var(--ac));
+      }
+      .cnt {
+        background: rgb(var(--s4));
+        border-radius: 99px;
+        font-size: 11px;
+        padding: 0 6px;
+        margin-left: 4px;
+        color: rgb(var(--t2));
+      }
+      .card {
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bd));
+        border-radius: 12px;
+      }
+      .row {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgb(var(--bd));
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .row.cancelled {
+        opacity: 0.72;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: baseline;
+      }
+      .q {
+        color: rgb(var(--t1));
+        font-weight: 500;
+        overflow-wrap: anywhere;
+        flex: 1 1 280px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 6px;
+        padding: 1px 8px;
+        font-size: 11px;
+        background: rgb(var(--s4));
+        color: rgb(var(--t2));
+        border: 1px solid rgb(var(--bd));
+        white-space: nowrap;
+      }
+      .chip.ok {
+        color: rgb(var(--ok));
+        border-color: rgb(var(--ok) / 0.35);
+        background: rgb(var(--ok) / 0.1);
+      }
+      .chip.bad {
+        color: rgb(var(--bad));
+        border-color: rgb(var(--bad) / 0.35);
+        background: rgb(var(--bad) / 0.1);
+      }
+      .chip.warn {
+        color: rgb(var(--warn));
+        border-color: rgb(var(--warn) / 0.35);
+        background: rgb(var(--warn) / 0.1);
+      }
+      .chip.info {
+        color: rgb(var(--info));
+        border-color: rgb(var(--info) / 0.35);
+        background: rgb(var(--info) / 0.1);
+      }
+      .chip.vio {
+        color: rgb(var(--vio));
+        border-color: rgb(var(--vio) / 0.35);
+        background: rgb(var(--vio) / 0.1);
+      }
+      .chip.hd {
+        color: rgb(var(--act));
+        border-color: rgb(var(--ac) / 0.35);
+        background: rgb(var(--acm) / 0.12);
+      }
+      .opts {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .opt {
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        padding: 6px 10px;
+        background: rgb(var(--s2));
+      }
+      .opt.sel {
+        border-color: rgb(var(--ac));
+        background: rgb(var(--acm) / 0.12);
+      }
+      .opt b {
+        font-weight: 500;
+        color: rgb(var(--t1));
+      }
+      .opt small {
+        display: block;
+        color: rgb(var(--t3));
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .more {
+        margin-top: 6px;
+        font-size: 12px;
+        padding: 2px 8px;
+      }
+      blockquote {
+        margin: 10px 0 0;
+        padding: 6px 12px;
+        border-left: 3px solid rgb(var(--ac));
+        background: rgb(var(--s2));
+        border-radius: 0 8px 8px 0;
+        color: rgb(var(--t1));
+        overflow-wrap: anywhere;
+      }
+      blockquote span,
+      .lbl {
+        display: block;
+        font-size: 11px;
+        color: rgb(var(--t3));
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .note {
+        margin-top: 8px;
+        font-size: 13px;
+        color: rgb(var(--t2));
+      }
+      .meta {
+        margin-top: 8px;
+        font-size: 12px;
+        color: rgb(var(--t3));
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+      }
+      .hint {
+        margin: 12px 2px 0;
+        font-size: 12px;
+        color: rgb(var(--t3));
+      }
+      .filters {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .filters button[aria-pressed="true"] {
+        border-color: rgb(var(--ac));
+        background: rgb(var(--acm) / 0.15);
+        color: rgb(var(--act));
+      }
+      .empty {
+        padding: 28px 18px;
+        text-align: center;
+        color: rgb(var(--t3));
+      }
+      .pl {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        display: block;
+        color: inherit;
+      }
+      .pl:hover {
+        background: none;
+      }
+      .pl h3 {
+        margin: 0;
+        font-size: 14px;
+        color: rgb(var(--t1));
+        font-weight: 500;
+      }
+      .pl p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: rgb(var(--t3));
+        overflow-wrap: anywhere;
+      }
+      .md {
+        margin-top: 12px;
+        padding: 12px 14px;
+        background: rgb(var(--s2));
+        border-radius: 8px;
+        border: 1px solid rgb(var(--bd));
+      }
+      .md h1,
+      .md h2,
+      .md h3 {
+        color: rgb(var(--t1));
+        margin: 12px 0 4px;
+        font-size: 15px;
+      }
+      .md h1:first-child {
+        margin-top: 0;
+      }
+      .md p {
+        margin: 6px 0;
+      }
+      .md ul {
+        margin: 6px 0;
+        padding-left: 20px;
+      }
+      .md code {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        background: rgb(var(--s4));
+        padding: 0 4px;
+        border-radius: 4px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgb(var(--t3));
+        text-align: left;
+        font-weight: 500;
+      }
+      th,
+      td {
+        padding: 10px 14px;
+        border-bottom: 1px solid rgb(var(--bd));
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td.p {
+        overflow-wrap: anywhere;
+      }
+      .gone {
+        text-decoration: line-through;
+        color: rgb(var(--t3));
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        background: rgb(var(--s4));
+        color: rgb(var(--t1));
+        border: 1px solid rgb(var(--bdl));
+        padding: 8px 14px;
+        border-radius: 8px;
+        z-index: 9;
+        max-width: 90vw;
+      }
+      @media (max-width: 760px) {
+        .side {
+          display: none;
+        }
+        main {
+          padding: 16px;
+        }
+        table,
+        thead,
+        tbody,
+        tr,
+        td {
+          display: block;
+        }
+        thead {
+          position: absolute;
+          left: -9999px;
+        }
+        tr {
+          padding: 10px 14px;
+          border-bottom: 1px solid rgb(var(--bd));
+        }
+        td {
+          border: 0;
+          padding: 2px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <nav class="side" aria-label="Gezinme">
+        <p class="brand">AI Cockpit</p>
+        <a href="#">Panel</a><a href="#">Topluluk</a><a href="#">Plan</a>
+        <a href="#" aria-current="page">Kararlar <span class="dot" id="navCnt"></span></a>
+        <a href="#">Ayarlar</a>
+      </nav>
+      <main>
+        <h1>Kararlar</h1>
+        <div class="bar">
+          <select id="proj" aria-label="Proje">
+            <option>ai-cockpit</option>
+            <option>başka-proje</option>
+          </select>
+          <div class="grow">
+            <input
+              id="q"
+              type="search"
+              placeholder="Başlık, soru, cevap ve notlarda ara"
+              aria-label="Ara"
+            />
+          </div>
+          <div class="menu">
+            <button id="exp" aria-haspopup="true" aria-expanded="false">Dışa aktar</button>
+            <ul id="expm" hidden>
+              <li><button data-f="AG-UI (JSON)">AG-UI (JSON)</button></li>
+              <li><button data-f="Düz JSON">Düz JSON</button></li>
+            </ul>
+          </div>
+          <button id="theme" aria-label="Temayı değiştir">Tema: koyu</button>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Bölümler" id="tabs"></div>
+        <div id="panels"></div>
+        <div class="toast" id="toast" role="status" hidden></div>
+      </main>
+    </div>
+    <script>
+      const DATA = {
+        decisions: [
+          {
+            sessionId: "010db837-c2e8-407d-8621-a812e0ec76fd",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "010db837-c2e8-407d-8621-a812e0ec76fd:toolu_01Rc8eotSQGSA8dR68mEwjvb:0",
+            reason: "input_required",
+            header: "Cursor attribution",
+            message:
+              'Cursor adds a "Co-authored-by: Cursor" line to the commits Grok makes (setting `attributeCommitsToAgent: true` in ~/.cursor/cli-config.json). That breaks your no-AI-attribution rule. Should I turn it off?',
+            options: [
+              {
+                label: "Turn it off",
+                description:
+                  "I set attributeCommitsToAgent and attributePRsToAgent to false; I clean the two existing commit messages before pushing.",
+              },
+              {
+                label: "Leave it, I'll clean it",
+                description:
+                  "The setting stays; I strip the line from every Grok commit before pushing.",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-05T13:31:28.705Z",
+            status: "resolved",
+            selected: ["Turn it off"],
+            other: false,
+            payload: { answer: "Turn it off" },
+            resolvedAt: "2026-11-05T13:40:44.002Z",
+          },
+          {
+            sessionId: "010db837-c2e8-407d-8621-a812e0ec76fd",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "010db837-c2e8-407d-8621-a812e0ec76fd:toolu_01YaSu6Qwkt7Fn5BgNCmc9Dq:0",
+            reason: "input_required",
+            header: "Model",
+            message:
+              "Codex'te (ChatGPT girişiyle) hangi OpenAI modeli kodlasın? Listede gpt-6-astra, gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna ve gpt-5.5 var; varsayılan ayar şu an glm-5.3:cloud (OpenAI değil).",
+            options: [
+              {
+                label: "gpt-5.6-terra",
+                description:
+                  "Orta katman olduğu varsayımıyla maliyet/kalite dengesi. Ben doğrulamadım.",
+              },
+              { label: "gpt-6-astra", description: "En yeni/güçlü görünen; daha pahalı olabilir." },
+              { label: "gpt-5.5", description: "Bilinen eski sürüm." },
+              {
+                label: "gpt-5.6-luna",
+                description: "En hafif katman olduğu varsayımıyla en ucuz.",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-04T10:52:18.687Z",
+            status: "resolved",
+            selected: [],
+            other: true,
+            payload: {
+              answer: "yonetici ajan karar versin kalan kullanim izinlerini de kontrol ederek",
+            },
+            resolvedAt: "2026-11-04T10:53:46.284Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01Wf27HJhzc6R7sji8FFUFrd:1",
+            reason: "input_required",
+            header: "Brief",
+            message: "İş tahtasında görev alınınca ajanın brief'ine hangi önceki kararlar girsin?",
+            options: [
+              {
+                label: "Alana dokunanlar (Recommended)",
+                description:
+                  "Görevin Alan: desenindeki dosyalara dokunan oturumlarda verilen kararlar; Alan yoksa depodaki son 20 karar",
+              },
+              {
+                label: "Depoda son 20",
+                description: "Aynı depodaki en yeni 20 karar, alana bakılmaz",
+              },
+              {
+                label: "Hiçbiri",
+                description: "Brief'e karar girmesin; Kararlar yalnız ekranda kalsın",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-16T12:10:50.305Z",
+            status: "resolved",
+            selected: ["Alana dokunanlar (Recommended)"],
+            other: false,
+            payload: { answer: "Alana dokunanlar (Recommended)" },
+            resolvedAt: "2026-11-16T12:11:46.929Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_015ptKRvzrtZZYhR3scCrp78:0",
+            reason: "input_required",
+            header: "İlk şablon",
+            message: "Akışlar ilk hangi şablonla başlasın?",
+            options: [
+              {
+                label: "inceleme-turu (Recommended)",
+                description:
+                  "İncele, Düzelt, Yeniden incele. En kısa; bugün elle en sık yaptığımız döngü, motoru en az riskle dener",
+              },
+              {
+                label: "ozellik",
+                description:
+                  "Netleştir, Uygula, İncele, Test, Kabul. Tam teslim; ilk denemede en çok parçayı çalıştırır",
+              },
+              { label: "hata", description: "Yeniden üret, Düzelt, İncele, Test, Kabul" },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-16T12:21:24.160Z",
+            status: "resolved",
+            selected: ["inceleme-turu (Recommended)"],
+            other: false,
+            payload: { answer: "inceleme-turu (Recommended)" },
+            resolvedAt: "2026-11-16T12:23:22.184Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_015ptKRvzrtZZYhR3scCrp78:1",
+            reason: "input_required",
+            header: "Motor",
+            message: "Akış motoru nerede çalışsın?",
+            options: [
+              {
+                label: "Kokpit sunucusunda (Recommended)",
+                description:
+                  "Ek süreç yok; sunucu kapanınca akış durur, açılınca kaldığı adımdan sürdürülür. Ajanlar zaten ayrı süreçte koşar",
+              },
+              {
+                label: "Ayrı arka plan süreci",
+                description: "Kokpit kapalıyken de ilerler; ek kurulum, başlatma ve izleme gerekir",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-16T12:21:24.160Z",
+            status: "resolved",
+            selected: ["Kokpit sunucusunda (Recommended)"],
+            other: false,
+            payload: { answer: "Kokpit sunucusunda (Recommended)" },
+            resolvedAt: "2026-11-16T12:23:22.184Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_015ptKRvzrtZZYhR3scCrp78:2",
+            reason: "input_required",
+            header: "Plan kapısı",
+            message: "Kabul dışında, uygulamaya geçmeden önce plan onayı kapısı olsun mu?",
+            options: [
+              {
+                label: "Evet, özellik ve hatada (Recommended)",
+                description:
+                  "Netleştir/Yeniden üret çıktısı onaylanmadan kod yazılmaz; inceleme turunda yok",
+              },
+              {
+                label: "Hayır",
+                description:
+                  "Yalnız sondaki Kabul kapısı; akış daha hızlı, yanlış yola girerse geç fark edilir",
+              },
+              {
+                label: "Akış dosyası seçsin",
+                description: "Şablonlarda kapalı, isteyen YAML'a gate adımı ekler",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-16T12:21:24.160Z",
+            status: "resolved",
+            selected: ["Evet, özellik ve hatada (Recommended)"],
+            other: false,
+            payload: { answer: "Evet, özellik ve hatada (Recommended)" },
+            resolvedAt: "2026-11-16T12:23:22.184Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01Wf27HJhzc6R7sji8FFUFrd:2",
+            reason: "input_required",
+            header: "K5-K6",
+            message:
+              "AG-UI olay girişi (K5) ve bekleyen soruyu kokpitten cevaplama (K6) ne zaman yapılsın?",
+            options: [
+              {
+                label: "Ayrı faz (Recommended)",
+                description: "Bu plan K1-K4 ile bitsin; K5-K6 sonra ayrı tasarım ve planla",
+              },
+              {
+                label: "Bu plana ekle",
+                description: "Plan büyür (yaklaşık +10 saat), tek seferde biter",
+              },
+              {
+                label: "Hiç yapılmasın",
+                description: "Kokpit yalnız izlesin; AG-UI'den yalnız veri şekli alınır",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-16T12:10:50.305Z",
+            status: "resolved",
+            selected: ["Ayrı faz (Recommended)"],
+            other: false,
+            payload: { answer: "Ayrı faz (Recommended)" },
+            resolvedAt: "2026-11-16T12:11:46.929Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_017UpTA6TNeUA7qhdYrZT8ji:0",
+            reason: "input_required",
+            header: "İçerik okuma",
+            message:
+              "Ekip içinde konuşma içeriğini kim okuyabilsin? (özet, maliyet, durum herkese açık kalır)",
+            options: [
+              {
+                label: "Yalnız lider ve yönetici",
+                description:
+                  "Üye ekip arkadaşının özetini görür, içeriğini açamaz; içerik projenin atandığı ekibe aittir",
+              },
+              {
+                label: "Tüm ekip üyeleri",
+                description: "Herkes ekip arkadaşının konuşmasını okuyabilir",
+              },
+              {
+                label: "Yalnız kişinin kendisi ve yönetici",
+                description: "Lider bile içeriği görmez",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:30:55.926Z",
+            status: "resolved",
+            selected: ["Yalnız lider ve yönetici"],
+            other: false,
+            payload: { answer: "Yalnız lider ve yönetici" },
+            resolvedAt: "2026-11-02T17:33:46.668Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_017UpTA6TNeUA7qhdYrZT8ji:1",
+            reason: "input_required",
+            header: "Gönderim",
+            message: "Bir cihaz bağlanınca ne gönderilsin?",
+            options: [
+              {
+                label: "Yalnız şirket repoları, yeni veri",
+                description:
+                  "Yöneticinin tanımladığı org/grup (ör. github.com/sirket) repoları; kişisel repolar gitmez; geçmiş gönderilmez",
+              },
+              {
+                label: "Şirket repoları, geçmişiyle",
+                description: "Aynı kapsam, KVKK onayından sonra son N günün geçmişi de gider",
+              },
+              {
+                label: "Her şey, dışlama listesiyle",
+                description: "Makinedeki tüm oturumlar gider; kişi istemediği repoları dışlar",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:30:55.926Z",
+            status: "resolved",
+            selected: ["Her şey, dışlama listesiyle"],
+            other: false,
+            payload: { answer: "Her şey, dışlama listesiyle" },
+            resolvedAt: "2026-11-02T17:33:46.668Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_017UpTA6TNeUA7qhdYrZT8ji:2",
+            reason: "input_required",
+            header: "Maliyet",
+            message:
+              "Sabit ücretli aboneliklerde (Claude Max, Cursor, ChatGPT Team) 'harcama' ne olsun?",
+            options: [
+              {
+                label: "İkisi birden",
+                description:
+                  "Gerçek koltuk ücreti (yönetici girer, kişiye atar) + API eşdeğeri tahmini; atıl = aylık kullanımı ücretinin %20'sinin altında",
+              },
+              {
+                label: "Yalnız API eşdeğeri",
+                description: "Bugünkü tahmin; koltuk ücreti tutulmaz, atıl abonelik ekranı olmaz",
+              },
+              {
+                label: "Yalnız koltuk ücreti",
+                description: "Gerçek fatura; kullanım tahmini gösterilmez",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:30:55.926Z",
+            status: "resolved",
+            selected: ["İkisi birden"],
+            other: false,
+            payload: { answer: "İkisi birden" },
+            resolvedAt: "2026-11-02T17:33:46.668Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_017UpTA6TNeUA7qhdYrZT8ji:3",
+            reason: "input_required",
+            header: "Maskeleme",
+            message: "Gizli bilgi maskeleme ne kadar sıkı olsun?",
+            options: [
+              {
+                label: "Kalıp + dışlama, hata olursa gönderme",
+                description:
+                  "Bilinen kalıplar maskelenir, hassas repolar dışlanır; maskeleme çalışamazsa içerik bekletilir. Kalıba uymayan müşteri verisi kaçabilir, bu kabul edilir",
+              },
+              {
+                label: "Daha sıkı: içerik varsayılan kapalı",
+                description: "İçerik yalnız yöneticinin açtığı projelerde gider",
+              },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:30:55.926Z",
+            status: "resolved",
+            selected: ["Kalıp + dışlama, hata olursa gönderme"],
+            other: false,
+            payload: { answer: "Kalıp + dışlama, hata olursa gönderme" },
+            resolvedAt: "2026-11-02T17:33:46.668Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01AACcUQSwrC6ZLDHWKefmYb:0",
+            reason: "input_required",
+            header: "Ekip",
+            message: "Ekip kaç kişi olacak?",
+            options: [
+              { label: "2-10 kişi", description: "Tek ekip" },
+              { label: "10-50 kişi", description: "Birkaç ekip" },
+              { label: "50+ kişi", description: "Şirket çapı" },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:24:13.272Z",
+            status: "resolved",
+            selected: ["50+ kişi"],
+            other: false,
+            payload: { answer: "50+ kişi" },
+            resolvedAt: "2026-11-02T17:25:02.105Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01AACcUQSwrC6ZLDHWKefmYb:1",
+            reason: "input_required",
+            header: "Görünürlük",
+            message: "Kim neyi görecek?",
+            options: [
+              { label: "Herkes herkesi görür", description: "Tam şeffaflık" },
+              { label: "Kişi kendini, yönetici tümünü", description: "Rol bazlı" },
+              { label: "Ekip kendi ekibini", description: "Ekip bazlı, yönetici tümünü" },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:24:13.272Z",
+            status: "resolved",
+            selected: ["Ekip kendi ekibini"],
+            other: false,
+            payload: { answer: "Ekip kendi ekibini" },
+            resolvedAt: "2026-11-02T17:25:02.105Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01AACcUQSwrC6ZLDHWKefmYb:3",
+            reason: "input_required",
+            header: "Sunucu",
+            message: "Merkez sunucu nerede çalışsın?",
+            options: [
+              { label: "Şirket içi sunucu", description: "Kendi ağınızda (Docker)" },
+              { label: "Bulut", description: "Kendi bulut hesabınızda" },
+              { label: "Karar veremedim", description: "Plan iki seçeneği de desteklesin" },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-02T17:24:13.272Z",
+            status: "resolved",
+            selected: ["Karar veremedim"],
+            other: false,
+            payload: { answer: "Karar veremedim" },
+            resolvedAt: "2026-11-02T17:25:02.105Z",
+          },
+          {
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            project: "ai-cockpit",
+            agent: "claude",
+            id: "07472422-0a94-43a8-aa3b-bbf6b1f213eb:toolu_01JGvYqBQkP7WihdK87z3yrD:0",
+            reason: "input_required",
+            header: "Klasör",
+            message: "ai-cockpit hangi klasöre kurulsun?",
+            options: [
+              {
+                label: "~/Projects/ai-cockpit (Recommended)",
+                description: "Ayrı proje, kendi git deposu; diğer projelere dokunulmaz.",
+              },
+              { label: "~/ai-cockpit", description: "Ev klasörünün kökünde." },
+            ],
+            multiSelect: false,
+            askedAt: "2026-11-01T10:04:30.067Z",
+            status: "resolved",
+            selected: ["~/ai-cockpit"],
+            other: false,
+            payload: { answer: "~/ai-cockpit" },
+            resolvedAt: "2026-11-01T10:06:38.783Z",
+          },
+        ],
+        designs: [
+          {
+            path: "docs/superpowers/specs/2026-11-16-kararlar-design.md",
+            kind: "spec",
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            writtenAt: "2026-11-17T08:07:44.852Z",
+            missing: false,
+          },
+          {
+            path: "docs/superpowers/specs/2026-11-16-akislar-design.md",
+            kind: "spec",
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            writtenAt: "2026-11-16T12:13:20.067Z",
+            missing: false,
+          },
+          {
+            path: "docs/superpowers/specs/2026-11-04-d1-tahta-taslak.html",
+            kind: "taslak",
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            writtenAt: "2026-11-10T09:56:17.867Z",
+            missing: false,
+          },
+          {
+            path: "docs/superpowers/specs/2026-11-02-merkezi-ekip-kokpiti-design.md",
+            kind: "spec",
+            sessionId: "07472422-0a94-43a8-aa3b-bbf6b1f213eb",
+            writtenAt: "2026-11-02T17:34:23.596Z",
+            missing: false,
+          },
+        ],
+      };
+      const NOW = Date.now(),
+        MIN = 6e4;
+      // Örnek ek veri: API'de plan_approval ve bekleyen örneği yok; uydurma.
+      const SID = "a1b2c3d4-0000-4000-8000-00000000000";
+      DATA.decisions[0].payload.note = "Grok commitlerinde AI imzası kalmasın diye.";
+      const extra = [
+        {
+          id: "x1",
+          project: "ai-cockpit",
+          sessionId: SID + "1",
+          agent: "claude",
+          reason: "plan_approval",
+          message: "Kararlar sayfası planı",
+          status: "resolved",
+          payload: {
+            plan: "# Kararlar sayfası planı\nKararlar sayfası için veri okuma ve ekran işleri.\n\n## Adımlar\n- Döküm okuyucu: AskUserQuestion ve ExitPlanMode sonuçlarını `tool_use_id` ile eşle\n- API: `/api/decisions` ve `/api/designs`\n- Ekran: sekmeler, arama, dışa aktarım\n\n## Riskler\nDökümlerin büyüklüğü; okuma artımlı yapılır, sonuç bellekte tutulur.",
+          },
+          askedAt: "2026-11-16T14:05:00.000Z",
+          resolvedAt: "2026-11-16T14:09:00.000Z",
+        },
+        {
+          id: "x2",
+          project: "ai-cockpit",
+          sessionId: SID + "2",
+          agent: "claude",
+          reason: "plan_approval",
+          message: "Ajan çalıştırma kuyruğu planı",
+          status: "cancelled",
+          payload: {
+            plan: "# Ajan çalıştırma kuyruğu\nTüm ajan başlatmalarını tek kuyruğa alıp sırayla çalıştır.\n\n## Adımlar\n- Kuyruk tablosu\n- Sıralı çalıştırıcı\n- Durum ekranı",
+            note: "Kuyruk gereksiz, mevcut eşzamanlılık sınırı yeterli. Önce ölçelim.",
+          },
+          askedAt: "2026-11-12T09:30:00.000Z",
+          resolvedAt: "2026-11-12T09:33:00.000Z",
+        },
+        {
+          id: "x3",
+          project: "ai-cockpit",
+          sessionId: SID + "3",
+          agent: "claude",
+          reason: "input_required",
+          header: "Alanlar",
+          message: "Hangi bölümler brief'e girsin?",
+          multiSelect: true,
+          options: [
+            { label: "Kararlar", description: "Önceki cevaplanmış sorular." },
+            { label: "Planlar", description: "Onaylanan planlar." },
+            { label: "Tasarımlar", description: "Yazılan spec dosyaları." },
+            { label: "Notlar", description: "Kullanıcı notları." },
+            { label: "Hepsi" },
+            { label: "Hiçbiri" },
+          ],
+          selected: ["Kararlar", "Planlar"],
+          other: false,
+          status: "resolved",
+          payload: { answer: ["Kararlar", "Planlar"] },
+          askedAt: "2026-11-14T11:20:00.000Z",
+          resolvedAt: "2026-11-14T11:22:00.000Z",
+        },
+        {
+          id: "p1",
+          project: "ai-cockpit",
+          sessionId: SID + "4",
+          agent: "claude",
+          reason: "input_required",
+          header: "Sıralama",
+          message: "Karar listesi hangi sırayla gösterilsin?",
+          options: [
+            { label: "Yeniden eskiye", description: "En son karar üstte." },
+            { label: "Eskiden yeniye" },
+          ],
+          status: "pending",
+          askedAt: new Date(NOW - 4 * MIN).toISOString(),
+        },
+        {
+          id: "p2",
+          project: "ai-cockpit",
+          sessionId: SID + "5",
+          agent: "claude",
+          reason: "input_required",
+          header: "Silme",
+          message: "Terk edilen sorular listeden otomatik silinsin mi, yoksa 30 gün saklansın?",
+          options: [
+            { label: "Sakla", description: "30 gün sonra sil." },
+            { label: "Hemen sil" },
+            { label: "Hiç silme" },
+          ],
+          status: "pending",
+          askedAt: new Date(NOW - 60 * MIN).toISOString(),
+        },
+        {
+          id: "c1",
+          project: "ai-cockpit",
+          sessionId: SID + "6",
+          agent: "claude",
+          reason: "input_required",
+          header: "Bildirim",
+          message: "Bekleyen soru olunca masaüstü bildirimi gösterilsin mi?",
+          options: [
+            { label: "Evet", description: "Soru 2 dakikadan uzun beklerse bildirim." },
+            { label: "Hayır", description: "Yalnız Panel şeridinde görünsün." },
+          ],
+          multiSelect: false,
+          askedAt: "2026-11-12T09:14:00.000Z",
+          status: "cancelled",
+          selected: [],
+          other: false,
+        },
+      ];
+      DATA.decisions.push(...extra);
+      DATA.designs.push(
+        {
+          path: "design/canvas/kararlar.dc.html",
+          kind: "kanvas",
+          sessionId: SID + "1",
+          writtenAt: "2026-11-15T10:00:00.000Z",
+          missing: false,
+        },
+        {
+          path: "design/review-site/kararlar-ekran.png",
+          kind: "görsel",
+          sessionId: SID + "1",
+          writtenAt: "2026-11-15T10:20:00.000Z",
+          missing: false,
+        },
+        {
+          path: "docs/superpowers/specs/2026-11-03-eski-taslak.html",
+          kind: "taslak",
+          sessionId: SID + "2",
+          writtenAt: "2026-11-03T08:00:00.000Z",
+          missing: true,
+        }
+      );
+
+      const $ = (s) => document.querySelector(s),
+        esc = (s) =>
+          String(s ?? "").replace(
+            /[&<>"]/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
+          );
+      const MON = [
+        "Oca",
+        "Şub",
+        "Mar",
+        "Nis",
+        "May",
+        "Haz",
+        "Tem",
+        "Ağu",
+        "Eyl",
+        "Eki",
+        "Kas",
+        "Ara",
+      ];
+      const fmt = (iso) => {
+        if (!iso) return "";
+        const d = new Date(iso),
+          p = (n) => String(n).padStart(2, "0");
+        return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+      };
+      const wait = (iso) => {
+        const m = Math.round((NOW - new Date(iso)) / MIN);
+        return m < 60 ? m + " dk" : Math.floor(m / 60) + " sa";
+      };
+      const sess = (id) =>
+        `<a href="#" class="mono" aria-label="Oturum ${esc(id.slice(0, 8))}">${esc(id.slice(0, 8))}</a>`;
+      const ans = (d) => [].concat(d.payload?.answer ?? []).join(" ");
+      const hay = (d) =>
+        [d.header, d.message, ans(d), d.payload?.note, d.payload?.plan].join(" ").toLowerCase();
+      let tab = "Kararlar",
+        status = "Hepsi",
+        needle = "",
+        expanded = new Set(),
+        openPlans = new Set();
+      const isPlan = (d) => d.reason === "plan_approval";
+      const all = () => DATA.decisions.filter((d) => hay(d).includes(needle));
+      const pending = () => all().filter((d) => d.status === "pending");
+      const asks = () => all().filter((d) => !isPlan(d) && d.status !== "pending");
+      const plans = () => all().filter(isPlan);
+
+      function opts(d) {
+        const sel = new Set(d.selected || []),
+          open = expanded.has(d.id),
+          list = open ? d.options : d.options.slice(0, 4);
+        let h =
+          '<ul class="opts">' +
+          list
+            .map((o) => {
+              const s = sel.has(o.label);
+              return `<li class="opt${s ? " sel" : ""}"><b>${s ? '<span aria-hidden="true">&#10003; </span>' : ""}${esc(o.label)}</b>${s ? ' <span class="chip hd">Seçildi</span>' : ""}${o.description ? `<small>${esc(o.description)}</small>` : ""}</li>`;
+            })
+            .join("") +
+          "</ul>";
+        if (d.options.length > 4 && !open)
+          h += `<button class="more" data-more="${esc(d.id)}">+${d.options.length - 4} seçenek daha</button>`;
+        return h;
+      }
+      function qrow(d, pend) {
+        const c = d.status === "cancelled";
+        return (
+          `<div class="row${c ? " cancelled" : ""}"><div class="top">${d.header ? `<span class="chip hd">${esc(d.header)}</span>` : ""}<span class="q">${esc(d.message)}</span>${c ? '<span class="chip warn">Terk edildi</span>' : pend ? '<span class="chip info">Bekliyor</span>' : ""}${d.multiSelect ? '<span class="chip">Çoklu seçim</span>' : ""}</div>` +
+          (d.options ? opts(d) : "") +
+          (d.other ? `<blockquote><span>Kendi cevabı</span>${esc(ans(d))}</blockquote>` : "") +
+          (d.payload?.note ? `<p class="note"><b>Not:</b> ${esc(d.payload.note)}</p>` : "") +
+          `<div class="meta"><span>${pend ? "Bekliyor: " + wait(d.askedAt) : fmt(d.askedAt)}</span><span>Oturum ${sess(d.sessionId)}</span></div></div>`
+        );
+      }
+      function md(t) {
+        let h = "",
+          ul = false;
+        const inl = (s) =>
+          esc(s)
+            .replace(/`([^`]+)`/g, "<code>$1</code>")
+            .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+        for (const l of t.split("\n")) {
+          const m = /^(#{1,3})\s+(.*)/.exec(l),
+            li = /^[-*]\s+(.*)/.exec(l);
+          if (ul && !li) {
+            h += "</ul>";
+            ul = false;
+          }
+          if (m) h += `<h${m[1].length}>${inl(m[2])}</h${m[1].length}>`;
+          else if (li) {
+            if (!ul) {
+              h += "<ul>";
+              ul = true;
+            }
+            h += `<li>${inl(li[1])}</li>`;
+          } else if (l.trim()) h += `<p>${inl(l)}</p>`;
+        }
+        return h + (ul ? "</ul>" : "");
+      }
+      function prow(d) {
+        const lines = d.payload.plan.split("\n"),
+          title = (lines.find((l) => /^#/.test(l)) || d.message).replace(/^#+\s*/, ""),
+          body = lines
+            .filter((l) => l.trim() && !/^#/.test(l))
+            .slice(0, 2)
+            .join(" "),
+          ok = d.status === "resolved",
+          o = openPlans.has(d.id);
+        return (
+          `<div class="row"><button class="pl" data-plan="${esc(d.id)}" aria-expanded="${o}"><div class="top"><h3 class="q">${esc(title)}</h3><span class="chip ${ok ? "ok" : "bad"}">${ok ? "Onaylandı" : "Reddedildi"}</span><span class="lbl" style="text-transform:none;letter-spacing:0">${fmt(d.askedAt)}</span></div><p>${esc(body)}</p></button>` +
+          (o ? `<div class="md">${md(d.payload.plan)}</div>` : "") +
+          (!ok && d.payload.note
+            ? `<p class="note"><b>Red notu:</b> ${esc(d.payload.note)}</p>`
+            : "") +
+          `</div>`
+        );
+      }
+      const KC = { spec: "info", taslak: "vio", kanvas: "ok", görsel: "warn" };
+      function drow(x) {
+        return `<tr><td class="p mono ${x.missing ? "gone" : ""}">${esc(x.path)}${x.missing ? ' <span class="chip warn">silinmiş</span>' : ""}</td><td><span class="chip ${KC[x.kind]}">${esc(x.kind)}</span>${x.kind === "taslak" && !x.missing ? ' <a href="#">Aç</a>' : ""}</td><td>${sess(x.sessionId)}</td><td>${fmt(x.writtenAt)}</td></tr>`;
+      }
+      const empty = (a, b) =>
+        `<div class="empty">${needle ? "Aramaya uyan kayıt yok. Aramayı temizleyin ya da başka bir sözcük deneyin." : a}</div>`;
+      function body(name) {
+        if (name === "Bekleyen") {
+          const l = pending();
+          return `<div class="card">${l.length ? l.map((d) => qrow(d, 1)).join("") : empty("Cevap bekleyen soru yok. Ajanlar soru sorduğunda burada görünür.")}</div><p class="hint">Claude Code oturumundaki soru kokpitten cevaplanamaz; oturuma geçip cevaplayın.</p>`;
+        }
+        if (name === "Kararlar") {
+          const l = asks()
+            .filter(
+              (d) => status === "Hepsi" || (status === "Cevaplandı") === (d.status === "resolved")
+            )
+            .sort((a, b) => (b.askedAt || "").localeCompare(a.askedAt || ""));
+          return `<div class="filters" role="group" aria-label="Durum süzgeci">${["Hepsi", "Cevaplandı", "Terk edildi"].map((s) => `<button data-st="${s}" aria-pressed="${s === status}">${s}</button>`).join("")}</div><div class="card">${l.length ? l.map((d) => qrow(d)).join("") : empty("Bu süzgeçte karar yok. Başka bir durum seçin.")}</div>`;
+        }
+        if (name === "Planlar") {
+          const l = plans();
+          return `<div class="card">${l.length ? l.map(prow).join("") : empty("Henüz onaylanan ya da reddedilen plan yok.")}</div>`;
+        }
+        const l = DATA.designs.filter((x) => (x.path + x.kind).toLowerCase().includes(needle));
+        return `<div class="card">${l.length ? `<table><thead><tr><th>Yol</th><th>Tür</th><th>Yazan oturum</th><th>Tarih</th></tr></thead><tbody>${l.map(drow).join("")}</tbody></table>` : empty("Bu projede tasarım dosyası bulunmuyor.")}</div>`;
+      }
+      const TABS = ["Bekleyen", "Kararlar", "Planlar", "Tasarımlar"];
+      const counts = () => ({
+        Bekleyen: pending().length,
+        Kararlar: asks().length,
+        Planlar: plans().length,
+        Tasarımlar: DATA.designs.length,
+      });
+      function render() {
+        const c = counts();
+        $("#navCnt").textContent = DATA.decisions.filter((d) => d.status === "pending").length;
+        $("#tabs").innerHTML = TABS.map(
+          (t, i) =>
+            `<button role="tab" id="t${i}" aria-controls="p${i}" aria-selected="${t === tab}" tabindex="${t === tab ? 0 : -1}">${t}<span class="cnt">${c[t]}</span></button>`
+        ).join("");
+        $("#panels").innerHTML = TABS.map(
+          (t, i) =>
+            `<div role="tabpanel" id="p${i}" aria-labelledby="t${i}" ${t === tab ? "" : "hidden"}>${t === tab ? body(t) : ""}</div>`
+        ).join("");
+      }
+      function toast(m) {
+        const t = $("#toast");
+        t.textContent = m;
+        t.hidden = false;
+        clearTimeout(toast.h);
+        toast.h = setTimeout(() => (t.hidden = true), 2200);
+      }
+      $("#tabs").addEventListener("click", (e) => {
+        const b = e.target.closest("[role=tab]");
+        if (b) {
+          tab = TABS[+b.id.slice(1)];
+          render();
+        }
+      });
+      $("#tabs").addEventListener("keydown", (e) => {
+        const i = TABS.indexOf(tab),
+          n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: 3 }[e.key];
+        if (n === undefined) return;
+        e.preventDefault();
+        tab = TABS[(n + 4) % 4];
+        render();
+        $("#t" + TABS.indexOf(tab)).focus();
+      });
+      $("#panels").addEventListener("click", (e) => {
+        const m = e.target.closest("[data-more]"),
+          s = e.target.closest("[data-st]"),
+          p = e.target.closest("[data-plan]");
+        if (m) expanded.add(m.dataset.more);
+        else if (s) status = s.dataset.st;
+        else if (p) {
+          const k = p.dataset.plan;
+          openPlans.has(k) ? openPlans.delete(k) : openPlans.add(k);
+        } else return;
+        render();
+      });
+      $("#q").addEventListener("input", (e) => {
+        needle = e.target.value.trim().toLowerCase();
+        render();
+      });
+      $("#proj").addEventListener("change", (e) => {
+        if (e.target.value !== "ai-cockpit")
+          toast("Bu projede henüz karar yok (taslakta örnek yok)");
+      });
+      $("#exp").addEventListener("click", () => {
+        const o = $("#expm").hidden;
+        $("#expm").hidden = !o;
+        $("#exp").setAttribute("aria-expanded", o);
+      });
+      $("#expm").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-f]");
+        if (!b) return;
+        $("#expm").hidden = true;
+        $("#exp").setAttribute("aria-expanded", false);
+        toast("Dışa aktarım (" + b.dataset.f + ") taslakta indirilmez");
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          $("#expm").hidden = true;
+          $("#exp").setAttribute("aria-expanded", false);
+        }
+      });
+      const root = document.documentElement;
+      const setTheme = (t) => {
+        root.dataset.theme = t;
+        $("#theme").textContent = "Tema: " + (t === "light" ? "açık" : "koyu");
+      };
+      setTheme(matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      $("#theme").addEventListener("click", () =>
+        setTheme(root.dataset.theme === "light" ? "dark" : "light")
+      );
+      render();
+    </script>
+  </body>
+</html>
