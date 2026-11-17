@@ -9,6 +9,7 @@ const path = require("node:path");
 const readline = require("node:readline");
 const { workRepo, checkoutRoot } = require("./plan");
 const { areasOverlap } = require("./task-fields");
+const { flowDecisions } = require("./flows/gates");
 
 // shortcut: unbounded per-process cache, add LRU if memory grows past a few hundred transcripts
 const cache = new Map();
@@ -226,6 +227,7 @@ async function listDecisions(db, { project, status, q, limit = 200 } = {}) {
       })
     );
   }
+  all.push(...flowDecisions(db, { project }));
   if (status) all = all.filter((d) => d.status === status);
   if (needle) {
     all = all.filter((d) =>
@@ -247,6 +249,7 @@ function toAgUi(d) {
     toolCallId: d.id.split(":")[1],
   };
   if (d.reason === "plan_approval") interrupt.metadata = { kind: "plan" };
+  else if (d.metadata) interrupt.metadata = d.metadata;
   else
     interrupt.responseSchema = d.multiSelect
       ? { type: "array", items: { type: "string", enum: labels } }

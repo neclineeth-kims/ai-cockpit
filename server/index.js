@@ -102,6 +102,7 @@ function createApp() {
   app.use("/api/limits", require("./routes/limits"));
   app.use("/api/plan", require("./routes/plan"));
   app.use("/api/decisions", require("./routes/decisions"));
+  app.use("/api/flows", require("./routes/flows"));
   app.use("/api/telemetry", require("./routes/telemetry"));
   app.use("/api/community", require("./routes/community"));
   app.use("/api/prices", require("./routes/prices"));
@@ -447,6 +448,10 @@ function repairInflatedTokenTotals() {
  * `require.main === module` block below never executes for it.
  */
 function startBackgroundServices() {
+  // Flow runs cut short by a restart carry on from their interrupted step.
+  require("./routes/flows")
+    .resumeAll()
+    .catch((err) => console.error("Akışlar sürdürülemedi:", err.message));
   // One-time legacy-session backfill (a no-op once its marker file exists).
   autoImportLegacySessions();
 
