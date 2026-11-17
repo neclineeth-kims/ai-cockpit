@@ -32,7 +32,7 @@ Ek olarak (öneri, kabul edildi):
 - Gönderim kapsamı: makinedeki tüm oturumlar gönderilir; kişi istemediği repoları/klasörleri dışlar.
 - Maliyet: ikisi birden. Gerçek koltuk ücreti (yönetici girer, kişiye atar) ve bugünkü API eşdeğeri tahmini yan yana gösterilir.
 - Maskeleme düzeyi: bilinen kalıplar + dışlama listesi kabul edilen çıtadır. Maskeleme çalışamazsa içerik gönderilmez, bekletilir. Kalıba uymayan müşteri verisinin kaçabileceği bilinen ve kabul edilen risktir.
-- Lisans ve isim kuralları sürer: GPL-3.0, "Developed by Caglar Ulkuderner", HugVet adı geçmez, iletişim yalnız HTTPS.
+- Lisans ve isim kuralları sürer: GPL-3.0, "Developed by Caglar Ulkuderner", başka projelerin adları geçmez, iletişim yalnız HTTPS.
 
 ## Hedef olmayanlar (ilk sürüm)
 

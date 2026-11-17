@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Lisans GPL-3.0; yeni dosya başlıklarında yazar "Caglar Ulkuderner". "HugVet" adı hiçbir yerde geçmez.
+- Lisans GPL-3.0; yeni dosya başlıklarında yazar "Caglar Ulkuderner". Başka projelerin adları hiçbir yerde geçmez.
 - Merkez yalnız HTTPS arkasında çalışır; oturum çerezi `Secure`, `HttpOnly`, `SameSite=Lax`. Yerel geliştirmede (`http://localhost`) `Secure` yalnız `AI_COCKPIT_CENTRAL_INSECURE_COOKIE=1` ile kapatılabilir.
 - Commit mesajlarında Claude/AI imzası, `Co-Authored-By` satırı yok.
 - Paket sürümleri tam sabitlenir (yukarıdaki sürümler, `^` yok).
