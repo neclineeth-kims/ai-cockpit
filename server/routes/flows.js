@@ -66,6 +66,54 @@ router.get(
   wrap((req, res) => res.json({ runs: store.listRuns(db, { repo: str(req.query.repo) }) }))
 );
 
+const TEMPLATES = path.join(__dirname, "..", "flows-templates");
+const templateFiles = (dir) => fs.readdirSync(path.join(TEMPLATES, dir)).sort();
+
+router.get(
+  "/templates",
+  wrap((req, res) => {
+    const templates = templateFiles("akislar").map((f) => {
+      const flow = parseFlow(fs.readFileSync(path.join(TEMPLATES, "akislar", f), "utf8"));
+      return {
+        ad: flow.ad,
+        aciklama: flow.aciklama,
+        adimlar: flow.adimlar.map(({ id, tur }) => ({ id, tur })),
+      };
+    });
+    res.json({ templates });
+  })
+);
+
+// Copies templates and role prompts into the repo; existing files are never overwritten.
+router.post(
+  "/install",
+  wrap((req, res) => {
+    const cwd = str(req.body?.cwd);
+    if (!cwd || !checkoutRoot(cwd)) throw fail(400, "cwd bir git dizini olmalı");
+    const copied = [];
+    const skipped = [];
+    for (const dir of ["akislar", "roller"]) {
+      const out = path.join(cwd, ".ai-cockpit", dir);
+      fs.mkdirSync(out, { recursive: true });
+      for (const f of templateFiles(dir)) {
+        const rel = `.ai-cockpit/${dir}/${f}`;
+        try {
+          fs.copyFileSync(
+            path.join(TEMPLATES, dir, f),
+            path.join(out, f),
+            fs.constants.COPYFILE_EXCL
+          );
+          copied.push(rel);
+        } catch (err) {
+          if (err.code !== "EEXIST") throw err;
+          skipped.push(rel);
+        }
+      }
+    }
+    res.json({ copied, skipped });
+  })
+);
+
 router.get(
   "/:id",
   wrap((req, res) => res.json({ run: needRun(req) }))

@@ -1,0 +1,36 @@
+ad: ozellik
+aciklama: Özelliği netleştirir, planı onaylatır, uygular, inceler, test eder.
+maliyet_tavani: 20
+adimlar:
+  - id: netlestir
+    tur: agent
+    rol: .ai-cockpit/roller/netlestirici.md
+    ajan: claude
+    model: sonnet
+    cikti: plan.md
+  - id: plan-onayi
+    tur: gate
+    mesaj: Plan uygun mu?
+    gosterilen: [plan.md]
+    geri_gonderilebilir: [netlestir]
+  - id: uygula
+    tur: agent
+    rol: .ai-cockpit/roller/uygulayici.md
+    ajan: opencode
+    model: zai-coding-plan/glm-5.3
+    girdi: [plan.md]
+  - id: incele
+    tur: agent
+    rol: .ai-cockpit/roller/inceleyici.md
+    ajan: claude
+    model: opus
+    cikti: inceleme.md
+    basarisizsa: uygula
+  - id: test
+    tur: script
+    komut: npm test
+  - id: kabul
+    tur: gate
+    mesaj: Özellik hazır, kabul ediyor musun?
+    gosterilen: [plan.md, inceleme.md]
+    geri_gonderilebilir: [uygula]

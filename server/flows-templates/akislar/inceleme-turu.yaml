@@ -1,0 +1,29 @@
+ad: inceleme-turu
+aciklama: Kodu inceler, bulguları düzeltir, yeniden inceler ve onayına sunar.
+maliyet_tavani: 20
+adimlar:
+  - id: incele
+    tur: agent
+    rol: .ai-cockpit/roller/inceleyici.md
+    ajan: claude
+    model: opus
+    cikti: inceleme.md
+  - id: duzelt
+    tur: agent
+    rol: .ai-cockpit/roller/duzeltici.md
+    ajan: opencode
+    model: zai-coding-plan/glm-5.3
+    girdi: [inceleme.md]
+  - id: yeniden-incele
+    tur: agent
+    rol: .ai-cockpit/roller/inceleyici.md
+    ajan: claude
+    model: opus
+    cikti: inceleme.md
+    basarisizsa: duzelt
+    en_cok_tur: 2
+  - id: kabul
+    tur: gate
+    mesaj: İnceleme turu bitti, kabul ediyor musun?
+    gosterilen: [inceleme.md]
+    geri_gonderilebilir: [duzelt]

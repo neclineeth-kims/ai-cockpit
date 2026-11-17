@@ -1,0 +1,36 @@
+ad: hata
+aciklama: Hatayı yeniden üretir, planı onaylatır, düzeltir, inceler, test eder.
+maliyet_tavani: 20
+adimlar:
+  - id: yeniden-uret
+    tur: agent
+    rol: .ai-cockpit/roller/yeniden-uretici.md
+    ajan: claude
+    model: sonnet
+    cikti: hata-raporu.md
+  - id: plan-onayi
+    tur: gate
+    mesaj: Hata teşhisi ve düzeltme planı uygun mu?
+    gosterilen: [hata-raporu.md]
+    geri_gonderilebilir: [yeniden-uret]
+  - id: duzelt
+    tur: agent
+    rol: .ai-cockpit/roller/duzeltici.md
+    ajan: opencode
+    model: zai-coding-plan/glm-5.3
+    girdi: [hata-raporu.md]
+  - id: incele
+    tur: agent
+    rol: .ai-cockpit/roller/inceleyici.md
+    ajan: claude
+    model: opus
+    cikti: inceleme.md
+    basarisizsa: duzelt
+  - id: test
+    tur: script
+    komut: npm test
+  - id: kabul
+    tur: gate
+    mesaj: Hata düzeldi, kabul ediyor musun?
+    gosterilen: [hata-raporu.md, inceleme.md]
+    geri_gonderilebilir: [duzelt]
