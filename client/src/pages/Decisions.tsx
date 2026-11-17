@@ -130,7 +130,9 @@ export default function Decisions() {
               empty(t("decisions.emptyPending"))
             )}
           </div>
-          <p className="text-xs text-gray-500">{t("decisions.pendingHint")}</p>
+          {lists.pending.some((d) => d.metadata?.kind !== "gate") && (
+            <p className="text-xs text-gray-500">{t("decisions.pendingHint")}</p>
+          )}
         </>
       );
     if (tab === "decisions")
