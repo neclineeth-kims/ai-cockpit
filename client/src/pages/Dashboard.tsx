@@ -73,6 +73,7 @@ import {
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router";
+import { PendingStrip } from "../components/decisions/PendingStrip";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -1364,6 +1365,7 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in min-h-[calc(100vh-4rem)]">
+      <PendingStrip />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">

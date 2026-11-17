@@ -74,6 +74,8 @@ export function DocumentTitle() {
     title = t("sessions");
   } else if (path.startsWith("/plan")) {
     title = t("plan");
+  } else if (path.startsWith("/decisions")) {
+    title = t("decisions");
   } else if (path.startsWith("/community")) {
     title = t("community");
   } else if (path.startsWith("/prompts")) {

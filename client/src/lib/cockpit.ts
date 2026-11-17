@@ -4,7 +4,7 @@
  * @author Caglar Ulkuderner
  */
 
-import { request } from "./api";
+import { dashboardToken, request } from "./api";
 
 export type TaskStatus = "todo" | "running" | "done" | "blocked";
 
@@ -17,6 +17,58 @@ export interface PlanTask {
   remaining_ms: number | null;
   started_at: string | null;
   done_at?: string | null;
+}
+
+export interface DecisionOption {
+  label: string;
+  description?: string;
+}
+
+/** One agent question (input_required) or plan approval (plan_approval) read from a transcript. */
+export interface Decision {
+  id: string;
+  sessionId: string;
+  project: string;
+  agent: string;
+  reason: "input_required" | "plan_approval";
+  header?: string;
+  message: string;
+  options?: DecisionOption[];
+  multiSelect?: boolean;
+  askedAt: string;
+  status: "pending" | "resolved" | "cancelled";
+  selected: string[];
+  other: boolean;
+  payload?: { answer?: string | string[]; note?: string; plan?: string };
+  resolvedAt?: string;
+}
+
+export interface DesignFile {
+  path: string;
+  kind: "spec" | "taslak" | "kanvas" | "gorsel";
+  sessionId: string;
+  writtenAt: string;
+  missing: boolean;
+}
+
+export interface DecisionProject {
+  root: string;
+  name: string;
+  lastAt: string | null;
+}
+
+const qs = (o: Record<string, string | number | undefined>) =>
+  new URLSearchParams(
+    Object.entries(o).flatMap(([k, v]) => (v === undefined || v === "" ? [] : [[k, String(v)]]))
+  ).toString();
+
+/** Authenticated GET of a raw file (the token goes in a header, never in a URL). */
+async function fetchBlob(path: string): Promise<Blob> {
+  const token = dashboardToken();
+  const res = await fetch(`/api${path}`, token ? { headers: { "x-dashboard-token": token } } : {});
+  if (res.status === 401) window.dispatchEvent(new Event("cockpit:unauthorized"));
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
 }
 
 export interface Plan {
@@ -237,6 +289,36 @@ export const cockpit = {
       commands: string[][];
       commits: string[];
     }>(`/community/tasks/${n}/pr`),
+  decisionProjects: () => request<{ projects: DecisionProject[] }>("/decisions/projects"),
+  decisions: (a: { project: string; status?: string; q?: string; limit?: number }) =>
+    request<{ decisions: Decision[]; pending: number }>(`/decisions?${qs(a)}`),
+  designs: (project: string) =>
+    request<{ designs: DesignFile[] }>(`/decisions/designs?${qs({ project })}`),
+  /** Relative URL only: the API may need a token header, so open files with {@link openDesign}. */
+  designFileUrl: (project: string, path: string) =>
+    `/api/decisions/designs/file?${qs({ project, path })}`,
+  /** Fetches the file with auth and shows it in a new tab inside a sandboxed iframe (no app origin). */
+  openDesign: async (project: string, path: string) => {
+    const blob = await fetchBlob(`/decisions/designs/file?${qs({ project, path })}`);
+    const w = window.open("about:blank", "_blank");
+    if (!w) throw new Error("popup blocked");
+    const frame = w.document.createElement("iframe");
+    frame.setAttribute("sandbox", "allow-scripts");
+    frame.style.cssText = "border:0;width:100%;height:100vh";
+    if (blob.type.startsWith("image/")) frame.src = URL.createObjectURL(blob);
+    else frame.srcdoc = await blob.text();
+    w.document.body.style.margin = "0";
+    w.document.body.append(frame);
+  },
+  /** Downloads the export through fetch (auth header) and a blob link. */
+  exportDecisions: async (project: string, format: "ag-ui" | "json") => {
+    const blob = await fetchBlob(`/decisions/export?${qs({ project, format })}`);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `kararlar-${project.split("/").pop()}-${format}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  },
   communityOpenPr: (n: number) =>
     request<{ url: string }>(`/community/tasks/${n}/pr`, { method: "POST" }),
 };

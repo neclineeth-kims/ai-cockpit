@@ -214,7 +214,7 @@ describe("CommandPalette", () => {
     // With no query and nothing in the MRU list the palette shows the twelve
     // sidebar routes: the rest of the catalog is one keystroke away, and dumping
     // ~150 rows into an empty launcher would bury them.
-    expect(screen.getAllByRole("option")).toHaveLength(12);
+    expect(screen.getAllByRole("option")).toHaveLength(13);
     expect(screen.getByText("Analytics")).toBeInTheDocument();
   });
 

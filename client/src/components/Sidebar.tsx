@@ -68,6 +68,7 @@ import {
   Boxes,
   Play,
   Target,
+  MessageSquareQuote,
   Users,
   Send,
   Settings,
@@ -111,6 +112,7 @@ function isUpdatePayload(x: unknown): x is UpdateStatusPayload {
 const NAV_KEYS = [
   { to: "/", icon: LayoutDashboard, key: "nav:dashboard" },
   { to: "/plan", icon: Target, key: "nav:plan" },
+  { to: "/decisions", icon: MessageSquareQuote, key: "nav:decisions" },
   { to: "/community", icon: Users, key: "nav:community" },
   { to: "/prompts", icon: Send, key: "nav:prompts" },
   { to: "/kanban", icon: Columns3, key: "nav:agentBoard" },

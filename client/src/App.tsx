@@ -85,6 +85,7 @@ import { Settings } from "./pages/Settings";
 import { CcConfig } from "./pages/CcConfig";
 import { Run } from "./pages/Run";
 import Plan from "./pages/Plan";
+import Decisions from "./pages/Decisions";
 import Community from "./pages/Community";
 import Prompts from "./pages/Prompts";
 import { TokenGate } from "./components/TokenGate";
@@ -136,6 +137,7 @@ export default function App() {
         <Route element={<Layout wsConnected={connected} />}>
           <Route index element={<Dashboard />} />
           <Route path="plan" element={<Plan />} />
+          <Route path="decisions" element={<Decisions />} />
           <Route path="community" element={<Community />} />
           <Route path="prompts" element={<Prompts />} />
           <Route path="kanban" element={<KanbanBoard />} />
