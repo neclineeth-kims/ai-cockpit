@@ -299,9 +299,16 @@ export const cockpit = {
     `/api/decisions/designs/file?${qs({ project, path })}`,
   /** Fetches the file with auth and shows it in a new tab inside a sandboxed iframe (no app origin). */
   openDesign: async (project: string, path: string) => {
-    const blob = await fetchBlob(`/decisions/designs/file?${qs({ project, path })}`);
+    // Open before the fetch: after an await the click no longer counts and the popup is blocked.
     const w = window.open("about:blank", "_blank");
     if (!w) throw new Error("popup blocked");
+    let blob: Blob;
+    try {
+      blob = await fetchBlob(`/decisions/designs/file?${qs({ project, path })}`);
+    } catch (e) {
+      w.close();
+      throw e;
+    }
     const frame = w.document.createElement("iframe");
     frame.setAttribute("sandbox", "allow-scripts");
     frame.style.cssText = "border:0;width:100%;height:100vh";
@@ -317,7 +324,7 @@ export const cockpit = {
     a.href = URL.createObjectURL(blob);
     a.download = `kararlar-${project.split("/").pop()}-${format}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 60_000); // revoking at once can cancel the download
   },
   communityOpenPr: (n: number) =>
     request<{ url: string }>(`/community/tasks/${n}/pr`, { method: "POST" }),
