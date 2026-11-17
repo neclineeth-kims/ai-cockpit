@@ -137,28 +137,37 @@ function parsePlanSections(markdown) {
   return out;
 }
 
-/** Repo a working directory belongs to; a linked worktree resolves to its main checkout. Null outside git. */
-function workRepo(cwd) {
+/** Walk up from cwd to the dir holding ".git"; returns it with the stat of ".git", or null outside git. */
+function findGit(cwd) {
   let dir = path.resolve(cwd);
   for (;;) {
-    const git = path.join(dir, ".git");
-    let st;
     try {
-      st = fs.statSync(git);
+      return { dir, st: fs.statSync(path.join(dir, ".git")) };
     } catch {
       const up = path.dirname(dir);
       if (up === dir) return null;
       dir = up;
-      continue;
     }
-    if (st.isDirectory()) return dir;
-    // worktree: ".git" file says "gitdir: <main>/.git/worktrees/<name>"
-    const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(git, "utf8"));
-    const g = m && path.resolve(dir, m[1].trim());
-    return g && path.basename(path.dirname(g)) === "worktrees"
-      ? path.dirname(path.dirname(path.dirname(g)))
-      : dir;
   }
+}
+
+/** Checkout a working directory sits in: the dir holding ".git", file (linked worktree) or directory. Null outside git. */
+function checkoutRoot(cwd) {
+  const g = findGit(cwd);
+  return g && g.dir;
+}
+
+/** Repo a working directory belongs to; a linked worktree resolves to its main checkout. Null outside git. */
+function workRepo(cwd) {
+  const g = findGit(cwd);
+  if (!g) return null;
+  if (g.st.isDirectory()) return g.dir;
+  // worktree: ".git" file says "gitdir: <main>/.git/worktrees/<name>"
+  const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(path.join(g.dir, ".git"), "utf8"));
+  const gd = m && path.resolve(g.dir, m[1].trim());
+  return gd && path.basename(path.dirname(gd)) === "worktrees"
+    ? path.dirname(path.dirname(path.dirname(gd)))
+    : g.dir;
 }
 
 const PLAN_DIRS = ["docs/superpowers/plans", "docs/plans", "docs", "plans", "."];
@@ -595,6 +604,7 @@ module.exports = {
   mentionRegex,
   branchTask,
   workRepo,
+  checkoutRoot,
   findRepoPlan,
   discoverPlans,
   buildPlan,

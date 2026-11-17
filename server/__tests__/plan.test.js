@@ -501,3 +501,22 @@ test("buildPlan scales plan day estimates by the pace of the finished ones", () 
   assert.equal(out.totals.remaining_ms, 86_400_000);
   assert.equal(out.totals.estimate_basis, "plan");
 });
+
+test("checkoutRoot keeps a linked worktree, workRepo resolves to the main checkout", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "ccam-co-"));
+  try {
+    const main = path.join(d, "main");
+    const wt = path.join(d, "wt");
+    fs.mkdirSync(path.join(main, ".git", "worktrees", "x"), { recursive: true });
+    fs.mkdirSync(path.join(wt, "sub"), { recursive: true });
+    fs.writeFileSync(
+      path.join(wt, ".git"),
+      `gitdir: ${path.join(main, ".git", "worktrees", "x")}\n`
+    );
+    assert.equal(plan.workRepo(path.join(wt, "sub")), main);
+    assert.equal(plan.checkoutRoot(path.join(wt, "sub")), wt);
+    assert.equal(plan.checkoutRoot(main), main);
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+});

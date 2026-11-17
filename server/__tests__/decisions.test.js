@@ -14,7 +14,15 @@ process.env.DASHBOARD_CODEX_HOME = path.join(root, "codex");
 process.env.DASHBOARD_DATA_DIR = path.join(root, "data");
 process.env.DASHBOARD_DB_PATH = path.join(root, "test.db");
 const { db } = require("../db");
-const { scanTranscript, decisionsFromScan, listDecisions, toAgUi } = require("../lib/decisions");
+const {
+  scanTranscript,
+  decisionsFromScan,
+  listDecisions,
+  toAgUi,
+  isDesignPath,
+  repoRelative,
+  listDesigns,
+} = require("../lib/decisions");
 after(() => {
   db.close();
   fs.rmSync(root, { recursive: true, force: true });
@@ -286,4 +294,75 @@ test("listDecisions filters, orders and skips missing files", async () => {
   );
   assert.equal((await listDecisions(db, { status: "pending" })).length, 0);
   assert.equal((await listDecisions(db, { limit: 1 })).length, 1);
+});
+
+test("isDesignPath classifies repo-relative paths", () => {
+  const k = isDesignPath;
+  assert.equal(k("docs/superpowers/specs/x.md"), "spec");
+  assert.equal(k("docs/superpowers/specs/x.html"), "taslak");
+  assert.equal(k("design/canvas/a.dc.html"), "kanvas");
+  assert.equal(k("docs/superpowers/specs/a.dc.html"), "kanvas");
+  assert.equal(k("design/n.md"), "spec");
+  assert.equal(k("design/n.html"), "taslak");
+  assert.equal(k("docs/x.dc.html"), null);
+  assert.equal(k("client/logo.svg"), "gorsel");
+  assert.equal(k("a/B.PNG"), "gorsel");
+  assert.equal(k("server/a.js"), null);
+  assert.equal(k("node_modules/p/logo.svg"), null);
+  assert.equal(k("design/.cache/a.md"), null);
+});
+
+test("repoRelative maps project and worktree paths to one relative path", () => {
+  const roots = ["/r/main", "/r/wt"];
+  assert.equal(repoRelative("/r/main/design/a.md", roots), "design/a.md");
+  assert.equal(repoRelative("/r/wt/design/a.md", roots), "design/a.md");
+  assert.equal(repoRelative("/r/other/design/a.md", roots), null);
+  assert.equal(repoRelative("/r/mainx/design/a.md", roots), null);
+});
+
+test("listDesigns keeps the latest write, flags missing files, skips other projects", async () => {
+  const proj = path.join(root, "dproj");
+  const wt = path.join(root, "dwt");
+  fs.mkdirSync(path.join(proj, ".git", "worktrees", "x"), { recursive: true });
+  fs.mkdirSync(path.join(proj, "design"), { recursive: true });
+  fs.writeFileSync(path.join(proj, "design", "here.md"), "x");
+  fs.mkdirSync(wt, { recursive: true });
+  fs.writeFileSync(path.join(wt, ".git"), `gitdir: ${path.join(proj, ".git", "worktrees", "x")}\n`);
+  const w = (file, ts) => use("w" + n++, "Write", { file_path: file }, ts);
+  const f1 = writeJsonl([
+    w(path.join(proj, "design", "here.md"), "2026-02-01T00:00:01Z"),
+    w(path.join(proj, "design", "gone.md"), "2026-02-01T00:00:02Z"),
+    w(path.join(proj, "server", "a.js"), "2026-02-01T00:00:03Z"),
+  ]);
+  const f2 = writeJsonl([w(path.join(wt, "design", "here.md"), "2026-02-02T00:00:01Z")]);
+  const f3 = writeJsonl([
+    w(path.join(root, "elsewhere", "design", "o.md"), "2026-02-03T00:00:01Z"),
+  ]);
+  const ins = db.prepare(
+    "INSERT INTO sessions (id, cwd, transcript_path, status) VALUES (?, ?, ?, 'completed')"
+  );
+  ins.run("d1", proj, f1);
+  ins.run("d2", wt, f2);
+  ins.run("d3", path.join(root, "elsewhere"), f3);
+  const ev = db.prepare(
+    "INSERT INTO events (session_id, event_type, tool_name) VALUES (?, 'PostToolUse', 'Write')"
+  );
+  for (const s of ["d1", "d2", "d3"]) ev.run(s);
+  const out = await listDesigns(db, { project: proj });
+  assert.deepEqual(out, [
+    {
+      path: "design/here.md",
+      kind: "spec",
+      sessionId: "d2",
+      writtenAt: "2026-02-02T00:00:01Z",
+      missing: false,
+    },
+    {
+      path: "design/gone.md",
+      kind: "spec",
+      sessionId: "d1",
+      writtenAt: "2026-02-01T00:00:02Z",
+      missing: true,
+    },
+  ]);
 });

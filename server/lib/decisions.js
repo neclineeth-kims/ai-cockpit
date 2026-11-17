@@ -4,8 +4,9 @@
  */
 
 const fs = require("node:fs");
+const path = require("node:path");
 const readline = require("node:readline");
-const { workRepo } = require("./plan");
+const { workRepo, checkoutRoot } = require("./plan");
 
 // shortcut: unbounded per-process cache, add LRU if memory grows past a few hundred transcripts
 const cache = new Map();
@@ -252,4 +253,61 @@ function toAgUi(d) {
   return out;
 }
 
-module.exports = { scanTranscript, decisionsFromScan, listDecisions, toAgUi };
+/** Kind of design file a repo-relative POSIX path is, or null. */
+function isDesignPath(rel) {
+  if (/(^|\/)(node_modules|\.[^/]+)\//.test(rel)) return null;
+  const inDir = rel.startsWith("docs/superpowers/specs/") || rel.startsWith("design/");
+  if (inDir && rel.endsWith(".dc.html")) return "kanvas";
+  if (inDir && rel.endsWith(".md")) return "spec";
+  if (inDir && rel.endsWith(".html")) return "taslak";
+  return /\.(png|jpe?g|svg|webp)$/i.test(rel) ? "gorsel" : null;
+}
+
+/** Path of file relative to the first root containing it, POSIX separators; null if under none. */
+function repoRelative(file, roots) {
+  const root = roots.find((r) => file.startsWith(r + path.sep));
+  return root ? path.relative(root, file).split(path.sep).join("/") : null;
+}
+
+/** Design files agents wrote in a project (its worktrees included), newest write first. */
+async function listDesigns(db, { project }) {
+  const rows = db
+    .prepare(
+      `SELECT s.id, s.cwd, s.transcript_path FROM sessions s
+       WHERE s.id IN (SELECT DISTINCT session_id FROM events
+                      WHERE tool_name IN ('Write','Edit','MultiEdit'))
+         AND s.transcript_path IS NOT NULL`
+    )
+    .all();
+  const latest = new Map();
+  for (const r of rows) {
+    if (!r.cwd || workRepo(r.cwd) !== project) continue;
+    let scan;
+    try {
+      scan = await scanTranscript(r.transcript_path);
+    } catch {
+      continue; // transcript missing or unreadable
+    }
+    const roots = [project, checkoutRoot(r.cwd)];
+    for (const w of scan.writes) {
+      const rel = repoRelative(w.file, roots);
+      const kind = rel && isDesignPath(rel);
+      const cur = latest.get(rel);
+      if (kind && (!cur || w.at > cur.writtenAt))
+        latest.set(rel, { path: rel, kind, sessionId: r.id, writtenAt: w.at });
+    }
+  }
+  return [...latest.values()]
+    .map((d) => ({ ...d, missing: !fs.existsSync(path.join(project, d.path)) }))
+    .sort((a, b) => (a.writtenAt < b.writtenAt ? 1 : a.writtenAt > b.writtenAt ? -1 : 0));
+}
+
+module.exports = {
+  scanTranscript,
+  decisionsFromScan,
+  listDecisions,
+  toAgUi,
+  isDesignPath,
+  repoRelative,
+  listDesigns,
+};
