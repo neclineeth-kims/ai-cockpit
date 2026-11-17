@@ -9,13 +9,14 @@ AI Cockpit, yapay zekâ ile kod geliştirirken çalışan ajanları (Claude Code
 1. [Kurulum ve açma](#1-kurulum-ve-açma)
 2. [Panel: canlı telemetri, limitler, tekrar okumalar](#2-panel)
 3. [Plan: aşamalar, sıradaki işler, tahminler](#3-plan)
-4. [Giden istemler](#4-giden-istemler)
-5. [Ajan Çalıştır (Cursor, Claude, Codex)](#5-ajan-çalıştır)
-6. [Topluluk: ortak iş kuyruğu](#6-topluluk)
-7. [Ayarlar: fiyat senkronu, dil, tema](#7-ayarlar)
-8. [Başka bilgisayardan erişim ve uzak ajanlar](#8-başka-bilgisayardan-erişim-ve-uzak-ajanlar)
-9. [Claude limitlerini bağlama](#9-claude-limitlerini-bağlama)
-10. [Sorun giderme](#10-sorun-giderme)
+4. [Kararlar: sorular, cevaplar, planlar, tasarımlar](#4-kararlar)
+5. [Giden istemler](#5-giden-istemler)
+6. [Ajan Çalıştır (Cursor, Claude, Codex)](#6-ajan-çalıştır)
+7. [Topluluk: ortak iş kuyruğu](#7-topluluk)
+8. [Ayarlar: fiyat senkronu, dil, tema](#8-ayarlar)
+9. [Başka bilgisayardan erişim ve uzak ajanlar](#9-başka-bilgisayardan-erişim-ve-uzak-ajanlar)
+10. [Claude limitlerini bağlama](#10-claude-limitlerini-bağlama)
+11. [Sorun giderme](#11-sorun-giderme)
 
 ---
 
@@ -54,7 +55,7 @@ En üstte oturum, ajan, olay ve maliyet özetleri; altında canlı bölümler va
 - **Toplam tasarruf** (yeşil şerit): önbellek (prompt caching) sayesinde, aynı token'lar düz girdi olarak faturalansaydı ödenecek tutara göre ne kadar tasarruf ettiğin. API liste fiyatıyla hesaplanır; aboneliğinde gerçekten ödediğin para değildir.
 - **Token / dk, önbellek isabeti, önbellek tasarrufu, harcanan**: son 1 saat ve tüm zamanlar.
 - **Grafik**: son 60 dakikada dakika başına token (çubuk) ve önbellek isabeti (yeşil çizgi).
-- **Modele göre tablo**: Claude, Codex/GPT, Gemini modelleri ayrı ayrı. Fiyatı bilinmeyen modelde "fiyat yok" yazar; [fiyat senkronu](#7-ayarlar) bunu doldurur.
+- **Modele göre tablo**: Claude, Codex/GPT, Gemini modelleri ayrı ayrı. Fiyatı bilinmeyen modelde "fiyat yok" yazar; [fiyat senkronu](#8-ayarlar) bunu doldurur.
 
 ### Kullanım limitleri
 
@@ -62,7 +63,7 @@ Bu bilgisayarda kurulu her AI aboneliği kendiliğinden listelenir:
 
 | Araç | Plan nereden okunur | Limit |
 | --- | --- | --- |
-| Claude Code | `~/.claude.json` (ör. Max 20x) | 5 saat ve haftalık, [durum satırı bağlanınca](#9-claude-limitlerini-bağlama) |
+| Claude Code | `~/.claude.json` (ör. Max 20x) | 5 saat ve haftalık, [durum satırı bağlanınca](#10-claude-limitlerini-bağlama) |
 | Codex | `~/.codex/auth.json` (ör. ChatGPT Team) | 5 saat ve haftalık, Codex loglarından |
 | Cursor | `cursor-agent about` (ör. Ultra) | Yerelde tutulmuyor: bugünkü oturum sayısı + "Kullanım paneli" bağlantısı |
 | Gemini CLI | `~/.gemini/settings.json` | Yerelde tutulmuyor: bugünkü oturum/istek sayısı + panel bağlantısı |
@@ -117,7 +118,23 @@ Plan dosyası iki biçimden birinde olabilir:
 - **Başlangıç**: plan dosyasının git'e girdiği gün ile ilk ölçülen oturumdan hangisi önceyse.
 - Tamamlanan aşamalar kapalı gelir; tıklayınca açılır.
 
-## 4. Giden istemler
+## 4. Kararlar
+
+Ajanların çalışırken sorduğu sorular (Claude Code'un seçenekli soruları), verdiğin cevaplar, plan onayları ve ajanların yazdığı tasarım dosyaları proje bazında burada toplanır. "Bunu neden böyle yapmıştık" sorusunun cevabı oturum oturum aranmaz.
+
+- **Kaynak**: Claude Code oturum dökümleri (`~/.claude/projects/.../*.jsonl`). Yeni bir ayar ya da hook gerekmez; kokpitin bildiği her oturum taranır. Codex ve Cursor soruları henüz görünmez.
+- **İlk açılış yavaştır**: dökümler ilk seferde okunur (birkaç yüz oturumda 10-15 saniye), sonra yalnız değişen döküm yeniden okunur.
+- **Proje**: üstteki seçiciden. Soru, soran oturumun açıldığı depoya yazılır; tasarım dosyası ise dosyanın kendi deposuna.
+- **Sekmeler**:
+  - *Bekleyen*: canlı bir oturumda cevap bekleyen sorular ve ne zamandır beklediği. Bu sorular kokpitten cevaplanamaz; oturuma geçip orada cevaplarsın. Panel'in üstünde de "N soru cevap bekliyor" şeridi çıkar.
+  - *Kararlar*: cevaplanmış ve terk edilmiş sorular. Seçilen seçenek işaretlidir; seçeneklerden biri yerine kendi yazdığın cevap "Kendi cevabı" olarak, notun varsa altında görünür.
+  - *Planlar*: plan onayları. Satıra tıklayınca planın tamamı açılır; reddettiğin planda notun görünür.
+  - *Tasarımlar*: `docs/superpowers/specs/**`, `design/**` altına ve görsel uzantılı (`.png .jpg .jpeg .svg .webp`) yazılan dosyalar, son yazan oturumla. HTML taslak ve kanvaslar "Aç" ile ayrı sekmede, korumalı (sandbox) olarak açılır. Silinmiş dosyalar üstü çizili görünür.
+- **Bekleyen ile terk edilmiş ayrımı**: cevapsız soru, oturum canlıysa ve dökümün son satırıysa *bekleyen*; oturum devam ettiyse ya da kapandıysa *terk edilmiş* sayılır.
+- **Dışa aktar**: seçili projenin kararlarını dosya olarak indirir. *AG-UI* biçimi [AG-UI](https://github.com/ag-ui-protocol/ag-ui) interrupt ve resume alanlarıyla yazılır; *Düz JSON* kokpitin kendi şeklidir. Veri yalnız sen indirince makineden çıkar.
+- **İş tahtası bağlantısı**: Topluluk'tan bir görev alındığında brief'e "Önceki kararlar" bölümü girer: görevin `Alan:` desenindeki dosyalara yazmış oturumlarda, o yazımlardan en çok 3 saat önce ya da sonra cevaplanmış sorular. Görevde `Alan:` yoksa projenin son 20 kararı. Bölüm en çok 4 KB'tır; sığmayan eski kararlar düşer. Ajan aynı soruyu yeniden sormaz.
+
+## 5. Giden istemler
 
 ![Giden istemler](images/nasil/07-istemler.png)
 
@@ -128,7 +145,7 @@ Yöneten ajanın başka ajanlara gönderdiği her istem, ana istem gibi okunabil
 
 Üstteki düğmelerle türe göre süz, sağdaki kutuyla istemlerde ara. Bir oturumun ayrıntı sayfasında "Bu oturumdan giden istemler" bağlantısı yalnız o oturumunkileri gösterir.
 
-## 5. Ajan Çalıştır
+## 6. Ajan Çalıştır
 
 ![Ajan Çalıştır, Cursor](images/nasil/08-ajan-calistir-cursor.png)
 
@@ -140,7 +157,7 @@ Claude Code, Codex ya da Cursor'ı kokpitten başlat:
 4. Cursor güvenilmeyen klasörde çalışmayı reddeder: yalnız koduna güvendiğin klasörlerde **Bu klasöre güven (--trust)** kutusunu işaretle.
 5. Çıktı canlı akar; Durdur ile kesebilirsin.
 
-## 6. Topluluk
+## 7. Topluluk
 
 ![Topluluk](images/nasil/05-topluluk.png)
 
@@ -195,7 +212,7 @@ Akış:
 
 Sağda **Ekip** (depo üyeleri, rolleri, aktif/biten görev sayıları) ve **Son bitenler** (kim, ne zaman) görünür. Depoya erişimi olan herkes kendi kokpitinde aynı panoyu görür.
 
-## 7. Ayarlar
+## 8. Ayarlar
 
 ![Fiyat senkronu](images/nasil/09-fiyat-senkronu.png)
 
@@ -209,7 +226,7 @@ Telefonda kenar çubuğu ikon şeridine iner, dokununca açılır:
 
 <img src="images/nasil/11-telefon.png" alt="Telefon görünümü" width="320">
 
-## 8. Başka bilgisayardan erişim ve uzak ajanlar
+## 9. Başka bilgisayardan erişim ve uzak ajanlar
 
 ### Kokpiti başka cihazlardan açmak
 
@@ -241,7 +258,7 @@ ai-cockpit-agent status
 - Kokpite ulaşılamazsa ajan asla beklemez.
 - Kaldırmak için: `ai-cockpit-agent uninstall` ve `ai-cockpit-agent disconnect`.
 
-## 9. Claude limitlerini bağlama
+## 10. Claude limitlerini bağlama
 
 Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez `~/.claude/settings.json` içindeki `statusLine.command` değerini, mevcut komutunu sarmalayacak şekilde değiştir:
 
@@ -254,7 +271,7 @@ Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez 
 
 Önceki durum satırın aynen çalışmaya devam eder; limitler `~/.ai-cockpit/claude-limits.json`'a yazılır ve Panel'de görünür.
 
-## 10. Sorun giderme
+## 11. Sorun giderme
 
 | Belirti | Çözüm |
 | --- | --- |
@@ -262,7 +279,7 @@ Claude Code kalan limitini yalnız durum satırına (statusline) verir. Bir kez 
 | "Erişim anahtarı" penceresi çıkıyor | Uzak mod açık. `ai-cockpit start` çıktısındaki `#token=` bağlantısını aç ya da anahtarı yapıştır (`~/.ai-cockpit/dashboard-token`). |
 | Diğer cihaz LAN IP'siyle bağlanamıyor | macOS: Sistem Ayarları > Gizlilik ve Güvenlik > Yerel Ağ'dan Node'a izin ver. Tailscale adresi bu izne takılmaz. |
 | Tailscale adresi açılmıyor | Tailnet'te Serve kapalı olabilir; `~/.ai-cockpit/server.log` içindeki bağlantıdan bir kez aç. |
-| Claude limitleri "bilinmiyor" | [Bölüm 9](#9-claude-limitlerini-bağlama)'daki durum satırı bağlantısı yapılmamış. |
+| Claude limitleri "bilinmiyor" | [Bölüm 10](#10-claude-limitlerini-bağlama)'daki durum satırı bağlantısı yapılmamış. |
 | Plan'da süreler "—" | Ölçüm, `(est:…)` ve biten görev yok. Bir görevi "bitti" işaretle ya da başlıklara `(est:2h)` ekle. |
 | Cursor görevi hemen bitiyor | Klasör güvenilir değil: "Bu klasöre güven (--trust)" kutusunu işaretle. |
 | İstemde dosya içeriği yerine "(… dosyasından)" yazıyor | Dosya kokpitte ayarlı bir proje klasörünün içinde değil (güvenlik gereği okunmaz). |
