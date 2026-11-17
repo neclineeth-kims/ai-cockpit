@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Akışlar Taslağı</title>
+    <!-- Akışlar ekranları taslağı. Statik, örnek veri. Kararlar taslağıyla aynı çerçeve. Developed by Caglar Ulkuderner -->
+    <style>
+      :root {
+        color-scheme: dark;
+        --s0: 6 6 10;
+        --s1: 12 12 20;
+        --s2: 19 19 30;
+        --s3: 26 26 40;
+        --s4: 34 34 51;
+        --bd: 42 42 61;
+        --bdl: 54 54 80;
+        --t1: 243 244 246;
+        --t2: 209 213 219;
+        --t3: 156 163 175;
+        --ac: 99 102 241;
+        --pb: 79 70 229;
+        --act: 165 180 252;
+        --acm: 99 102 241;
+        --ok: 110 231 183;
+        --bad: 252 165 165;
+        --warn: 252 211 77;
+        --info: 125 211 252;
+        --vio: 196 181 253;
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --s0: 242 242 247;
+        --s1: 255 255 255;
+        --s2: 245 245 247;
+        --s3: 255 255 255;
+        --s4: 236 236 240;
+        --bd: 217 217 224;
+        --bdl: 199 199 208;
+        --t1: 29 29 31;
+        --t2: 44 44 48;
+        --t3: 88 88 94;
+        --ac: 79 70 229;
+        --act: 67 56 202;
+        --acm: 79 70 229;
+        --ok: 6 95 70;
+        --bad: 153 27 27;
+        --warn: 120 53 15;
+        --info: 3 105 161;
+        --vio: 91 33 182;
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) {
+          color-scheme: light;
+          --s0: 242 242 247;
+          --s1: 255 255 255;
+          --s2: 245 245 247;
+          --s3: 255 255 255;
+          --s4: 236 236 240;
+          --bd: 217 217 224;
+          --bdl: 199 199 208;
+          --t1: 29 29 31;
+          --t2: 44 44 48;
+          --t3: 88 88 94;
+          --ac: 79 70 229;
+          --act: 67 56 202;
+          --acm: 79 70 229;
+          --ok: 6 95 70;
+          --bad: 153 27 27;
+          --warn: 120 53 15;
+          --info: 3 105 161;
+          --vio: 91 33 182;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        overflow-x: hidden;
+      }
+      body {
+        background: rgb(var(--s1));
+        color: rgb(var(--t2));
+        font:
+          14px/1.5 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      :focus-visible {
+        outline: 2px solid rgb(var(--act));
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      .side {
+        width: 200px;
+        flex: none;
+        background: rgb(var(--s2));
+        border-right: 1px solid rgb(var(--bd));
+        padding: 16px 12px;
+      }
+      .brand {
+        font-weight: 600;
+        color: rgb(var(--t1));
+        margin: 0 8px 16px;
+      }
+      .side a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        color: rgb(var(--t3));
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .side a[aria-current] {
+        background: rgb(var(--acm) / 0.15);
+        color: rgb(var(--act));
+      }
+      .side a:hover {
+        background: rgb(var(--s4));
+      }
+      .dot {
+        background: rgb(var(--pb));
+        color: #fff;
+        border-radius: 99px;
+        font-size: 11px;
+        padding: 0 6px;
+        min-width: 18px;
+        text-align: center;
+      }
+      main {
+        flex: 1;
+        min-width: 0;
+        padding: 24px 20px;
+        max-width: 980px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: rgb(var(--t1));
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: rgb(var(--t1));
+        margin: 0;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .bar .grow {
+        flex: 1;
+      }
+      select,
+      textarea,
+      button {
+        font: inherit;
+        color: rgb(var(--t1));
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 64px;
+        resize: vertical;
+      }
+      select {
+        max-width: 100%;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgb(var(--s4));
+      }
+      button.pri {
+        background: rgb(var(--pb));
+        border-color: rgb(var(--pb));
+        color: #fff;
+      }
+      button.pri:hover {
+        background: rgb(67 56 202);
+      }
+      button.sm {
+        font-size: 12px;
+        padding: 2px 8px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        overflow: hidden;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .seg button {
+        border: 0;
+        border-radius: 0;
+        background: rgb(var(--s3));
+        color: rgb(var(--t3));
+        white-space: nowrap;
+      }
+      .seg button + button {
+        border-left: 1px solid rgb(var(--bd));
+      }
+      .seg button[aria-selected="true"] {
+        background: rgb(var(--acm) / 0.18);
+        color: rgb(var(--act));
+      }
+      .card {
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bd));
+        border-radius: 12px;
+      }
+      .row {
+        padding: 14px 18px;
+        border-bottom: 1px solid rgb(var(--bd));
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .ttl {
+        color: rgb(var(--t1));
+        font-weight: 500;
+        overflow-wrap: anywhere;
+        flex: 1 1 240px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+        align-items: center;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 6px;
+        padding: 1px 8px;
+        font-size: 11px;
+        background: rgb(var(--s4));
+        color: rgb(var(--t2));
+        border: 1px solid rgb(var(--bd));
+        white-space: nowrap;
+      }
+      .chip.ok {
+        color: rgb(var(--ok));
+        border-color: rgb(var(--ok) / 0.35);
+        background: rgb(var(--ok) / 0.1);
+      }
+      .chip.bad {
+        color: rgb(var(--bad));
+        border-color: rgb(var(--bad) / 0.35);
+        background: rgb(var(--bad) / 0.1);
+      }
+      .chip.warn {
+        color: rgb(var(--warn));
+        border-color: rgb(var(--warn) / 0.35);
+        background: rgb(var(--warn) / 0.1);
+      }
+      .chip.info {
+        color: rgb(var(--info));
+        border-color: rgb(var(--info) / 0.35);
+        background: rgb(var(--info) / 0.1);
+      }
+      .chip.vio {
+        color: rgb(var(--vio));
+        border-color: rgb(var(--vio) / 0.35);
+        background: rgb(var(--vio) / 0.1);
+      }
+      .chip.hd {
+        color: rgb(var(--act));
+        border-color: rgb(var(--ac) / 0.35);
+        background: rgb(var(--acm) / 0.12);
+      }
+      .lbl {
+        display: block;
+        font-size: 11px;
+        color: rgb(var(--t3));
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .meta {
+        font-size: 12px;
+        color: rgb(var(--t3));
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        margin-top: 6px;
+        overflow-wrap: anywhere;
+      }
+      .note {
+        margin-top: 8px;
+        font-size: 13px;
+        color: rgb(var(--t2));
+      }
+      .hint {
+        margin: 12px 2px 0;
+        font-size: 12px;
+        color: rgb(var(--t3));
+      }
+      .badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+        flex-wrap: wrap;
+      }
+      .menu {
+        position: relative;
+      }
+      .menu ul {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        z-index: 5;
+        margin: 0;
+        padding: 4px;
+        list-style: none;
+        background: rgb(var(--s3));
+        border: 1px solid rgb(var(--bdl));
+        border-radius: 8px;
+        width: 290px;
+        max-width: calc(100vw - 48px);
+      }
+      .menu li button {
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: none;
+      }
+      .menu li button:hover {
+        background: rgb(var(--s4));
+      }
+      .menu li small {
+        display: block;
+        color: rgb(var(--t3));
+        font-size: 12px;
+      }
+      .spin {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgb(var(--info) / 0.3);
+        border-top-color: rgb(var(--info));
+        border-radius: 50%;
+        animation: sp 0.9s linear infinite;
+        flex: none;
+      }
+      @keyframes sp {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spin {
+          animation: none;
+        }
+      }
+      svg.ic {
+        width: 13px;
+        height: 13px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .hd2 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 16px 18px;
+      }
+      .acts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .strip {
+        overflow-x: auto;
+        margin: 16px 0;
+        padding: 12px 12px 4px;
+        scrollbar-width: thin;
+      }
+      .strip > div {
+        width: 952px;
+        position: relative;
+      }
+      .strip ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        gap: 28px;
+      }
+      .nd {
+        position: relative;
+        width: 132px;
+        flex: none;
+        border: 1px solid rgb(var(--bd));
+        border-radius: 10px;
+        background: rgb(var(--s2));
+        padding: 8px 10px;
+        display: grid;
+        gap: 4px;
+        justify-items: start;
+      }
+      .nd:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        right: -29px;
+        top: 50%;
+        width: 28px;
+        border-top: 2px solid rgb(var(--bdl));
+      }
+      .nd .nm {
+        color: rgb(var(--t1));
+        font-size: 13px;
+      }
+      .nd .st {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+      }
+      .nd.running {
+        border-color: rgb(var(--info));
+      }
+      .nd.done {
+        border-color: rgb(var(--ok) / 0.5);
+      }
+      .nd.failed {
+        border-color: rgb(var(--bad));
+      }
+      .nd.gate {
+        border-color: rgb(var(--warn));
+      }
+      .nd.pending {
+        border-style: dashed;
+      }
+      .back {
+        display: block;
+        margin-top: 2px;
+      }
+      .back path {
+        fill: none;
+        stroke: rgb(var(--t3));
+        stroke-width: 1.5;
+      }
+      .back text {
+        fill: rgb(var(--t2));
+        font-size: 10px;
+        letter-spacing: 0.08em;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgb(var(--t3));
+        text-align: left;
+        font-weight: 500;
+      }
+      th,
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgb(var(--bd));
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td .btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .steps {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .steps li {
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        padding: 6px 10px;
+        background: rgb(var(--s2));
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        align-items: center;
+      }
+      .steps li span:last-child {
+        color: rgb(var(--t3));
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .form {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: rgb(var(--s2));
+        border: 1px solid rgb(var(--bd));
+        border-radius: 8px;
+        display: grid;
+        gap: 8px;
+      }
+      .form label {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: rgb(var(--t3));
+      }
+      .gate {
+        padding: 16px 18px;
+        margin-bottom: 12px;
+      }
+      .gate .acts {
+        margin-top: 12px;
+      }
+      .panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(520px, 100vw);
+        z-index: 20;
+        background: rgb(var(--s2));
+        border-left: 1px solid rgb(var(--bdl));
+        display: flex;
+        flex-direction: column;
+      }
+      .panel header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgb(var(--bd));
+      }
+      .panel pre {
+        margin: 0;
+        padding: 14px 16px;
+        overflow: auto;
+        flex: 1;
+        font-size: 12px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: rgb(var(--t1));
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        background: rgb(var(--s4));
+        color: rgb(var(--t1));
+        border: 1px solid rgb(var(--bdl));
+        padding: 8px 14px;
+        border-radius: 8px;
+        z-index: 30;
+        max-width: 90vw;
+      }
+      @media (max-width: 760px) {
+        .side {
+          display: none;
+        }
+        main {
+          padding: 16px;
+        }
+        table,
+        thead,
+        tbody,
+        tr,
+        td {
+          display: block;
+        }
+        thead {
+          position: absolute;
+          left: -9999px;
+        }
+        tr {
+          padding: 10px 14px;
+          border-bottom: 1px solid rgb(var(--bd));
+        }
+        tr:last-child {
+          border-bottom: 0;
+        }
+        td {
+          border: 0;
+          padding: 2px 0;
+        }
+        td[data-l]::before {
+          content: attr(data-l) ": ";
+          color: rgb(var(--t3));
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        td.nl::before {
+          content: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <nav class="side" aria-label="Gezinme">
+        <p class="brand">AI Cockpit</p>
+        <a href="#">Panel</a><a href="#">Topluluk</a><a href="#">Plan</a>
+        <a href="#" aria-current="page">Akışlar</a>
+        <a href="#">Kararlar <span class="dot">4</span></a>
+        <a href="#">Ayarlar</a>
+      </nav>
+      <main>
+        <h1>Akışlar</h1>
+        <div class="bar">
+          <div class="seg" role="tablist" aria-label="Görünümler" id="views">
+            <button role="tab" id="t-a" aria-controls="v-a" aria-selected="true" data-v="a">
+              Görev satırı
+            </button>
+            <button
+              role="tab"
+              id="t-b"
+              aria-controls="v-b"
+              aria-selected="false"
+              data-v="b"
+              tabindex="-1"
+            >
+              Akış koşusu
+            </button>
+            <button
+              role="tab"
+              id="t-c"
+              aria-controls="v-c"
+              aria-selected="false"
+              data-v="c"
+              tabindex="-1"
+            >
+              Kapı kartları
+            </button>
+          </div>
+          <span class="grow"></span>
+          <button id="theme" aria-label="Temayı değiştir">Tema: koyu</button>
+        </div>
+        <section id="v-a" role="tabpanel" aria-labelledby="t-a" tabindex="0"></section>
+        <section id="v-b" role="tabpanel" aria-labelledby="t-b" tabindex="0" hidden></section>
+        <section id="v-c" role="tabpanel" aria-labelledby="t-c" tabindex="0" hidden></section>
+      </main>
+    </div>
+    <aside class="panel" id="panel" role="dialog" aria-labelledby="pt" hidden>
+      <header>
+        <h2 id="pt" class="mono"></h2>
+        <button id="pclose">Kapat</button>
+      </header>
+      <pre id="pbody" class="mono" tabindex="0"></pre>
+    </aside>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const IC = {
+        done: '<path d="M3 8.5l3.5 3.5L13 5"/>',
+        failed: '<path d="M4 4l8 8M12 4l-8 8"/>',
+        gate: '<path d="M5.5 3v10M10.5 3v10"/>',
+        pending: '<circle cx="8" cy="8" r="5"/>',
+        interrupted: '<path d="M8 3v6M8 12v1"/>',
+        stopped: '<rect x="4" y="4" width="8" height="8"/>',
+      };
+      const ST = {
+        running: ["info", "Çalışıyor"],
+        gate: ["warn", "Kapıda"],
+        done: ["ok", "Bitti"],
+        failed: ["bad", "Hata"],
+        stopped: ["", "Durduruldu"],
+        interrupted: ["vio", "Yarıda kaldı"],
+        pending: ["", "Bekliyor"],
+      };
+      const icon = (st) =>
+        st === "running"
+          ? '<span class="spin" aria-hidden="true"></span>'
+          : `<svg class="ic" viewBox="0 0 16 16" aria-hidden="true">${IC[st]}</svg>`;
+      const chip = (st) => `<span class="chip ${ST[st][0]}">${icon(st)}${ST[st][1]}</span>`;
+      const usd = (n) => "$" + n.toFixed(2);
+
+      const FLOWS = [
+        ["inceleme-turu", "İncele, düzelt, yeniden incele. Mevcut değişiklik için."],
+        ["ozellik", "Netleştir, planı onaylat, uygula, incele, test et, kabul."],
+        ["hata", "Yeniden üret, düzelt, incele, test et, kabul."],
+      ];
+      const TASKS = [
+        ["Kararlar sayfasına sayfalama", ["web", "server"], "claude", "none"],
+        ["Panel şeridi açık temada", ["web"], "opencode", "run"],
+        ["Oturum listesinde arama", ["web", "server"], "claude", "gate"],
+        ["Maliyet özetini dışa aktar", ["server"], "opencode", "done"],
+      ];
+      function viewA() {
+        const badge = (k) =>
+          k === "none"
+            ? `<div class="menu"><button class="pri" id="startBtn" aria-haspopup="true" aria-expanded="false">Akışla başlat</button>
+                <ul id="startMenu" hidden>${FLOWS.map((f) => `<li><button data-flow="${f[0]}"><b class="mono">${f[0]}</b><small>${f[1]}</small></button></li>`).join("")}</ul></div>`
+            : k === "run"
+              ? `<span class="chip info"><span class="spin" aria-hidden="true"></span><span class="mono">ozellik · uygula (tur 1)</span></span>`
+              : k === "gate"
+                ? `<span class="chip warn">${icon("gate")}Kararını bekliyor</span>`
+                : `<span class="chip ok">${icon("done")}Bitti</span><span class="chip">Toplam ${usd(3.42)}</span>`;
+        return `<div class="card">${TASKS.map(
+          (t) => `<div class="row"><div class="top"><div class="ttl">${t[0]}
+            <div class="chips">${t[1].map((a) => `<span class="chip hd">${a}</span>`).join("")}<span class="meta" style="margin:0">Sahibi: ${t[2]}</span></div></div>
+            <div class="badge">${badge(t[3])}</div></div></div>`
+        ).join("")}</div>
+        <p class="hint">Görev tahtasındaki satırın sağında akış rozeti görünür. Rozete tıklamak koşu sayfasını açar.</p>`;
+      }
+
+      const NODES = ["netlestir", "plan-onayi", "uygula", "incele", "test", "kabul"];
+      const R = (s, r, st, ag, d, c, id, note) => ({ s, r, st, ag, d, c, id, note });
+      const ROWS = [
+        R("netlestir", 1, "done", "claude · sonnet", "1 dk 52 sn", 0.46, "a3f9c1"),
+        R("plan-onayi", 1, "done", "insan (kapı)", "4 dk 02 sn", 0, "-"),
+        R("uygula", 1, "done", "opencode · glm-5.3", "6 dk 40 sn", 1.12, "7be20d"),
+        R("incele", 1, "done", "claude · opus", "2 dk 05 sn", 0.98, "c41d88"),
+        R("uygula", 2, "done", "opencode · glm-5.3", "3 dk 18 sn", 0.74, "e90a5f"),
+      ];
+      const RUNNING = [R("incele", 2, "running", "claude · opus", "1 dk 10 sn", 0.8, "5d17b2")];
+      const FAILED = [
+        R("incele", 2, "done", "claude · opus", "1 dk 48 sn", 0.8, "5d17b2"),
+        R(
+          "test",
+          1,
+          "failed",
+          "npm test",
+          "38 sn",
+          0,
+          "-",
+          "Çıkış kodu 1: 2 test başarısız (decisions-paging.test.js). Ayrıntı için Log."
+        ),
+      ];
+      let failedMode = false;
+      const STRIP_W = 160;
+      function viewB() {
+        const rows = ROWS.concat(failedMode ? FAILED : RUNNING);
+        const last = {};
+        rows.forEach((x) => (last[x.s] = x));
+        const total = rows.reduce((a, x) => a + x.c, 0);
+        const st = failedMode ? "failed" : "running";
+        const nodes = NODES.map((n) => {
+          const x = last[n];
+          const s = x ? x.st : "pending";
+          return `<li class="nd ${s}"><span class="nm mono">${n}</span><span class="st">${icon(s)}${ST[s][1]}</span>${x && x.r > 1 ? `<span class="chip">tur ${x.r}</span>` : ""}</li>`;
+        }).join("");
+        const cx = (i) => 66 + STRIP_W * i;
+        return `<div class="card hd2"><div>
+            <span class="lbl">Akış koşusu</span><h2><span class="mono">ozellik</span> · Kararlar sayfasına sayfalama</h2>
+            <div class="meta mono"><span>ai-cockpit</span><span>~/ai-cockpit-wt/sayfalama</span></div>
+            <div class="chips">${chip(st)}<span class="chip">Maliyet ${usd(total)} / $20</span><span class="chip">Geçen süre ${failedMode ? "19 dk 20 sn" : "18 dk 42 sn"}</span></div></div>
+          <div class="acts">${failedMode ? '<button class="pri" data-toast="Test adımı yeniden denenecek (taslak)">Yeniden dene</button>' : '<button data-toast="Koşu durdurulacak (taslak)">Durdur</button>'}
+            <button id="failTgl" aria-pressed="${failedMode}">Hatalı varyantı göster</button></div></div>
+        <div class="card strip" role="region" aria-label="Adım şeridi" tabindex="0"><div>
+          <ol aria-label="Adımlar">${nodes}</ol>
+          <svg class="back" width="${STRIP_W * 6}" height="40" viewBox="0 0 ${STRIP_W * 6} 40" role="img" aria-label="incele adımından uygula adımına DÜZELT geri bağlantısı">
+            <path d="M${cx(3)} 2 C${cx(3)} 36 ${cx(2)} 36 ${cx(2)} 8"/><path d="M${cx(2) - 4} 14 L${cx(2)} 6 L${cx(2) + 4} 14"/>
+            <text x="${(cx(2) + cx(3)) / 2}" y="34" text-anchor="middle">DÜZELT</text></svg></div></div>
+        <div class="card"><table><thead><tr><th>Adım</th><th>Tur</th><th>Durum</th><th>Ajan / model</th><th>Süre</th><th>Maliyet</th><th>Oturum</th><th>İşlemler</th></tr></thead><tbody>
+        ${rows
+          .map(
+            (
+              x,
+              i
+            ) => `<tr><td class="nl"><b class="mono" style="color:rgb(var(--t1))">${x.s}</b>${x.note ? `<div class="note">${x.note}</div>` : ""}</td>
+            <td data-l="Tur">${x.r}</td><td data-l="Durum">${chip(x.st)}</td><td data-l="Ajan / model" class="mono">${x.ag}</td>
+            <td data-l="Süre">${x.d}</td><td data-l="Maliyet">${usd(x.c)}</td>
+            <td data-l="Oturum">${x.id === "-" ? "-" : `<a class="mono" href="#" style="color:rgb(var(--act))">${x.id}</a>`}</td>
+            <td class="nl"><div class="btns"><button class="sm" data-log="${i}">Log</button><button class="sm" data-out="${i}">Çıktı</button>${x.st === "done" ? `<button class="sm" data-toast="${x.s} adımından yeniden başlatılacak (taslak)">Buradan başlat</button>` : ""}</div></td></tr>`
+          )
+          .join("")}</tbody></table></div>
+        <p class="hint">Üstteki düğme yalnız taslakta çalışma ile hata durumu arasında geçer. Gerçek ekranda Durdur çalışırken, Yeniden dene hatalıyken görünür.</p>`;
+      }
+      const ROWSNOW = () => ROWS.concat(failedMode ? FAILED : RUNNING);
+
+      const SEV = `SONUÇ: DÜZELT
+
+## Bulgular (önem sırasına göre)
+
+1. YÜKSEK  server/routes/decisions.js:88
+   limit üst sınırı yok. limit=100000 tüm tabloyu döker.
+   Düzeltme: en fazla 200 ile sınırla, geçersizse 400 dön.
+
+2. ORTA  web/decisions/Pager.js:41
+   Son sayfada "Sonraki" düğmesi etkin kalıyor.
+
+3. ORTA  web/decisions/Pager.js:57
+   Sayfa değişince arama kutusu sıfırlanıyor.
+
+4. DÜŞÜK  web/decisions/decisions.css:12
+   Dar ekranda sayfalayıcı taşıyor.
+
+Test: decisions-paging.test.js sınır durumunu kapsamıyor.`;
+      const OUT = {
+        "plan.md": `# Plan: Kararlar sayfalama
+
+- Sunucu: GET /api/decisions?sayfa=1&limit=50 döner { items, toplam }.
+- Arayüz: Pager bileşeni, 50 kayıt, sayfa numarası URL'de.
+- Filtre ve aramayla birlikte çalışır.
+- Test: sınır durumları (boş, tek sayfa, son sayfa).`,
+        "inceleme.md": SEV,
+        "inceleme-2.md": `SONUÇ: TAMAM
+
+## Bulgular (önem sırasına göre)
+
+1. DÜŞÜK  web/decisions/decisions.css:12
+   Dar ekran taşması giderildi. Başka bulgu yok.`,
+      };
+      const GENERIC = {
+        netlestir: ["plan.md yazıldı (31 satır)"],
+        uygula: ["değişen dosya: 4 (+128 -17)"],
+        incele: ["inceleme.md yazıldı"],
+        test: [
+          "npm test",
+          "FAIL decisions-paging.test.js",
+          "  son sayfa sınırı: beklenen 50, gelen 51",
+          "2 başarısız, 41 geçti",
+          "çıkış kodu 1",
+        ],
+        "plan-onayi": ["kapı onaylandı"],
+      };
+      function logOf(x) {
+        const t = (m) =>
+          "[14:" + String(2 + Math.floor(Math.random() * 40)).padStart(2, "0") + "] " + m;
+        const body = x.st === "running" ? ["inceleme yazılıyor..."] : GENERIC[x.s] || [];
+        return [
+          `${x.s} (tur ${x.r}) başladı`,
+          `ajan: ${x.ag}`,
+          x.id === "-" ? "oturum yok" : `oturum: ${x.id}`,
+          ...body,
+          x.st === "done" ? "bitti" : x.st === "failed" ? "hata" : "sürüyor",
+        ]
+          .map(t)
+          .join("\n");
+      }
+      function outOf(x) {
+        if (x.st === "running") return "Çıktı henüz yok. Adım çalışıyor.";
+        if (x.s === "netlestir") return OUT["plan.md"];
+        if (x.s === "incele") return x.r === 1 ? OUT["inceleme.md"] : OUT["inceleme-2.md"];
+        if (x.s === "test")
+          return "FAIL decisions-paging.test.js\n  son sayfa sınırı: beklenen 50, gelen 51\n\n2 başarısız, 41 geçti";
+        if (x.s === "plan-onayi") return "Karar: onaylandı (4 dk 02 sn sonra).";
+        return " M server/routes/decisions.js\n M web/decisions/Pager.js\n M web/decisions/decisions.css\n A  web/decisions/decisions-paging.test.js";
+      }
+
+      const GATE_HEAD = (
+        kind,
+        cls,
+        flow,
+        task,
+        wait
+      ) => `<div class="top"><div><span class="chip ${cls}">${kind}</span>
+        <h2 style="margin-top:6px"><span class="mono">${flow}</span> · ${task}</h2></div><span class="chip">${wait}</span></div>
+        <div class="meta mono"><span>ai-cockpit</span></div>`;
+      function form(id, selHtml, label) {
+        return `<form class="form" id="${id}" hidden>${selHtml}<label>Not<textarea required placeholder="Ne düzeltilsin?"></textarea></label>
+          <div class="acts"><button class="pri" type="submit">${label}</button><button type="button" data-close="${id}">Vazgeç</button></div></form>`;
+      }
+      function viewC() {
+        const steps = [
+          ["netlestir", "agent", "claude · sonnet"],
+          ["plan-onayi", "gate", "insan onayı"],
+          ["uygula", "agent", "opencode · zai-coding-plan/glm-5.3"],
+          ["incele", "agent", "claude · opus"],
+          ["test", "script", "npm test"],
+          ["kabul", "gate", "insan onayı"],
+        ];
+        return `<h2 style="margin-bottom:10px">Kararlar, Bekleyen sekmesi <span class="chip">4</span></h2>
+        <article class="card gate">${GATE_HEAD("Akış onayı", "hd", "ozellik", "Kararlar sayfasına sayfalama", "2 dk 14 sn bekliyor")}
+          <ol class="steps">${steps.map((s) => `<li><b class="mono" style="color:rgb(var(--t1))">${s[0]}</b><span class="chip ${s[1] === "gate" ? "warn" : ""}">${s[1]}</span><span class="mono">${s[2]}</span></li>`).join("")}</ol>
+          <p class="note">Akış dosyası ya da rol istemleri değişirse yeniden onay istenir.</p>
+          <div class="acts"><button class="pri" data-toast="Akış onaylandı ve başlatıldı (taslak)">Onayla ve başlat</button></div></article>
+
+        <article class="card gate">${GATE_HEAD("Kabul", "ok", "ozellik", "Panel şeridi açık temada", "11 dk 40 sn bekliyor")}
+          <p class="note">Özellik hazır, kabul ediyor musun?</p>
+          <div class="chips"><span class="lbl" style="margin-right:4px">Gösterilen dosyalar</span><button class="chip mono" data-file="plan.md">plan.md</button><button class="chip mono" data-file="inceleme-2.md">inceleme.md</button></div>
+          <div class="acts"><button class="pri" data-toast="Kabul edildi (taslak)">Onayla</button><button data-open="f1" aria-expanded="false" aria-controls="f1">Geri gönder</button></div>
+          ${form("f1", '<label>Geri gönderilecek adım<select><option value="uygula">uygula</option></select></label>', "Geri gönder")}</article>
+
+        <article class="card gate">${GATE_HEAD("Tur sınırı aşıldı", "warn", "inceleme-turu", "Kararlar sayfasına sayfalama", "27 dk 05 sn bekliyor")}
+          <p class="note">Adım <span class="mono">yeniden-incele</span> 2 tur sonra hâlâ SONUÇ: DÜZELT dedi. Tur sınırı 2.</p>
+          <div class="acts"><button class="pri" data-toast="Tur sınırı aşılarak devam ediliyor (taslak)">Yine de devam et</button><button data-open="f2" aria-expanded="false" aria-controls="f2">Düzelt'e geri gönder</button></div>
+          ${form("f2", "", "Düzelt'e gönder")}</article>
+
+        <article class="card gate">${GATE_HEAD("Maliyet tavanı aşıldı", "bad", "ozellik", "Oturum listesinde arama", "46 sn bekliyor")}
+          <p class="note">Toplam maliyet <b class="mono" style="color:rgb(var(--t1))">$20.40 / $20</b>. Akış tavan aşıldığı için durdu.</p>
+          <div class="acts"><button class="pri" data-toast="Yeni tavan $40, akış devam ediyor (taslak)">Tavanı $20 artır ve devam et</button></div></article>`;
+      }
+
+      function render() {
+        $("#v-a").innerHTML = viewA();
+        $("#v-b").innerHTML = viewB();
+        $("#v-c").innerHTML = viewC();
+      }
+      let toastT;
+      const toast = (m) => {
+        const t = $("#toast");
+        t.textContent = m;
+        t.hidden = false;
+        clearTimeout(toastT);
+        toastT = setTimeout(() => (t.hidden = true), 2400);
+      };
+      let opener = null;
+      function panel(title, text, from) {
+        opener = from;
+        $("#pt").textContent = title;
+        $("#pbody").textContent = text;
+        $("#panel").hidden = false;
+        $("#pclose").focus();
+      }
+      function closePanel() {
+        $("#panel").hidden = true;
+        if (opener && document.contains(opener)) opener.focus();
+      }
+      function setView(v) {
+        document.querySelectorAll("#views [role=tab]").forEach((b) => {
+          const on = b.dataset.v === v;
+          b.setAttribute("aria-selected", on);
+          b.tabIndex = on ? 0 : -1;
+          $("#v-" + b.dataset.v).hidden = !on;
+        });
+      }
+      function closeMenu() {
+        const m = $("#startMenu");
+        if (m && !m.hidden) {
+          m.hidden = true;
+          $("#startBtn").setAttribute("aria-expanded", "false");
+        }
+      }
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return closeMenu();
+        if (b.id === "startBtn") {
+          const m = $("#startMenu");
+          m.hidden = !m.hidden;
+          b.setAttribute("aria-expanded", String(!m.hidden));
+          return;
+        }
+        closeMenu();
+        if (b.dataset.flow)
+          toast(b.dataset.flow + " akışı onay için Kararlar sayfasına gönderilecek (taslak)");
+        else if (b.dataset.v) setView(b.dataset.v);
+        else if (b.id === "theme") {
+          const r = document.documentElement;
+          const light = r.dataset.theme
+            ? r.dataset.theme === "light"
+            : matchMedia("(prefers-color-scheme: light)").matches;
+          r.dataset.theme = light ? "dark" : "light";
+          b.textContent = "Tema: " + (light ? "koyu" : "açık");
+        } else if (b.id === "failTgl") {
+          failedMode = !failedMode;
+          $("#v-b").innerHTML = viewB();
+          $("#failTgl").focus();
+        } else if (b.dataset.log)
+          panel("Log: " + ROWSNOW()[b.dataset.log].s, logOf(ROWSNOW()[b.dataset.log]), b);
+        else if (b.dataset.out)
+          panel("Çıktı: " + ROWSNOW()[b.dataset.out].s, outOf(ROWSNOW()[b.dataset.out]), b);
+        else if (b.dataset.file) panel(b.textContent, OUT[b.dataset.file], b);
+        else if (b.id === "pclose") closePanel();
+        else if (b.dataset.toast) toast(b.dataset.toast);
+        else if (b.dataset.open) {
+          const f = $("#" + b.dataset.open);
+          f.hidden = !f.hidden;
+          b.setAttribute("aria-expanded", String(!f.hidden));
+          if (!f.hidden) f.querySelector("textarea").focus();
+        } else if (b.dataset.close) {
+          $("#" + b.dataset.close).hidden = true;
+          document
+            .querySelector(`[data-open=${b.dataset.close}]`)
+            .setAttribute("aria-expanded", "false");
+        }
+      });
+      document.addEventListener("submit", (e) => {
+        e.preventDefault();
+        e.target.hidden = true;
+        toast("Geri gönderildi (taslak)");
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (!$("#panel").hidden) closePanel();
+          else closeMenu();
+        }
+        const tab = e.target.closest && e.target.closest("#views [role=tab]");
+        if (tab && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+          const all = [...document.querySelectorAll("#views [role=tab]")];
+          const n =
+            all[(all.indexOf(tab) + (e.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
+          setView(n.dataset.v);
+          n.focus();
+        }
+      });
+      render();
+      if (matchMedia("(prefers-color-scheme: light)").matches)
+        $("#theme").textContent = "Tema: açık";
+    </script>
+  </body>
+</html>
