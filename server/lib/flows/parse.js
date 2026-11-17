@@ -90,6 +90,8 @@ function parseFlow(text) {
       }
       if (raw.basarisizsa != null) {
         target("basarisizsa", raw.basarisizsa);
+        // the runner reads "SONUÇ: TAMAM|DÜZELT" from this step's output
+        if (!step.cikti) fail(`${at}.basarisizsa için cikti gerekli`);
         step.basarisizsa = raw.basarisizsa;
       }
     } else if (raw.tur === "script") {

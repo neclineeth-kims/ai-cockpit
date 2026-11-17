@@ -122,3 +122,15 @@ it("en_cok_tur bounds", () => {
   fails(flowWith(agent("    en_cok_tur: 6\n")), /adimlar\[0\]\.en_cok_tur/);
   assert.equal(parseFlow(flowWith(agent("    en_cok_tur: 5\n"))).adimlar[0].en_cok_tur, 5);
 });
+
+it("basarisizsa needs an output file", () => {
+  assert.throws(
+    () =>
+      parseFlow(`ad: x
+adimlar:
+  - { id: a, tur: agent, rol: r.md, ajan: claude, cikti: a.md }
+  - { id: b, tur: agent, rol: r.md, ajan: claude, basarisizsa: a }
+`),
+    /adimlar\[1\]\.basarisizsa için cikti gerekli/
+  );
+});
