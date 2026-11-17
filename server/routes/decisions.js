@@ -7,7 +7,7 @@ const { Router } = require("express");
 const fs = require("node:fs");
 const path = require("node:path");
 const { db } = require("../db");
-const { listDecisions, listDesigns, toAgUi } = require("../lib/decisions");
+const { listDecisions, listDesigns, listProjects, toAgUi } = require("../lib/decisions");
 
 const router = Router();
 
@@ -38,6 +38,8 @@ router.get(
     res.json({ decisions, pending });
   })
 );
+
+router.get("/projects", (req, res) => res.json({ projects: listProjects(db) }));
 
 router.get(
   "/designs",

@@ -147,3 +147,25 @@ test("design file outside project is 404", async () => {
     assert.doesNotMatch(await r.text(), /SECRET/);
   }
 });
+
+test("projects: grouped by repo, newest first", async () => {
+  const other = path.join(root, "other-repo");
+  fs.mkdirSync(path.join(other, ".git"), { recursive: true });
+  const ins = db.prepare(
+    "INSERT INTO sessions (id, cwd, ended_at, status) VALUES (?, ?, ?, 'completed')"
+  );
+  ins.run("s2", path.join(proj, "server"), "2020-01-01T00:00:00Z");
+  ins.run("s3", other, "2099-01-01T00:00:00Z");
+  const ev = db.prepare(
+    "INSERT INTO events (session_id, event_type, tool_name) VALUES (?, 'PostToolUse', 'Write')"
+  );
+  ev.run("s2");
+  ev.run("s3");
+  const { projects } = await (await get("/projects")).json();
+  assert.deepEqual(
+    projects.map((p) => p.name),
+    ["other-repo", "my proj!"]
+  );
+  assert.equal(projects[0].lastAt, "2099-01-01T00:00:00Z");
+  assert.ok(projects[1].lastAt > "2020-01-01T00:00:00Z");
+});

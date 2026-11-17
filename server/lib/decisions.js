@@ -4,6 +4,7 @@
  */
 
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const readline = require("node:readline");
 const { workRepo, checkoutRoot } = require("./plan");
@@ -316,6 +317,27 @@ async function listDesigns(db, { project }) {
     .sort((a, b) => (a.writtenAt < b.writtenAt ? 1 : a.writtenAt > b.writtenAt ? -1 : 0));
 }
 
+/** Repos with sessions that asked questions or wrote files, newest activity first. */
+function listProjects(db) {
+  const rows = db
+    .prepare(
+      `SELECT s.cwd, COALESCE(s.ended_at, s.started_at) AS at FROM sessions s
+       WHERE s.cwd IS NOT NULL
+         AND s.id IN (SELECT DISTINCT session_id FROM events
+                      WHERE tool_name IN ('AskUserQuestion','ExitPlanMode','Write','Edit','MultiEdit'))`
+    )
+    .all();
+  const last = new Map();
+  for (const r of rows) {
+    const root = workRepo(r.cwd);
+    if (!root || root === os.homedir()) continue;
+    if (!last.has(root) || (r.at || "") > last.get(root)) last.set(root, r.at || "");
+  }
+  return [...last]
+    .map(([root, lastAt]) => ({ root, name: path.basename(root), lastAt: lastAt || null }))
+    .sort((a, b) => (a.lastAt < b.lastAt ? 1 : a.lastAt > b.lastAt ? -1 : 0));
+}
+
 const BRIEF_BYTES = 4096;
 const NEAR_MS = 3 * 3_600_000;
 const oneLine = (v) => String(v).replace(/\s*\n\s*/g, " ");
@@ -389,4 +411,5 @@ module.exports = {
   isDesignPath,
   repoRelative,
   listDesigns,
+  listProjects,
 };
