@@ -76,6 +76,15 @@ test("brief has the data warning and all sections", () => {
     assert.ok(text.includes(h), h);
 });
 
+test("brief has decisions section between earlier tasks and memories; empty omits it", () => {
+  const base = { where: "w", title: "t", body: "b", memories: ["not 1"] };
+  const text = b.buildBrief({ ...base, decisions: ["- 2026-11-16 [H] S -> C"] });
+  const i = text.indexOf("## Önceki kararlar\n\n- 2026-11-16 [H] S -> C\n");
+  assert.ok(i > text.indexOf("## Önce biten görevler"));
+  assert.ok(i < text.indexOf("## Önceki çalışmalardan notlar"));
+  assert.ok(!b.buildBrief({ ...base, decisions: [] }).includes("## Önceki kararlar"));
+});
+
 test("brief is capped at 32 KB", () => {
   const text = b.buildBrief({
     where: "w",

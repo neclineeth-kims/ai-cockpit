@@ -7,6 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const readline = require("node:readline");
 const { workRepo, checkoutRoot } = require("./plan");
+const { areasOverlap } = require("./task-fields");
 
 // shortcut: unbounded per-process cache, add LRU if memory grows past a few hundred transcripts
 const cache = new Map();
@@ -269,6 +270,16 @@ function repoRelative(file, roots) {
   return root ? path.relative(root, file).split(path.sep).join("/") : null;
 }
 
+/** Resolver for a written file: its repo and checkout root come from the file's own dir, not the session cwd. */
+function writeResolver() {
+  const where = new Map(); // dir -> { repo, root }
+  return (file) => {
+    const dir = path.dirname(file);
+    if (!where.has(dir)) where.set(dir, { repo: workRepo(dir), root: checkoutRoot(dir) });
+    return where.get(dir);
+  };
+}
+
 /** Design files agents wrote in a project (its worktrees included), newest write first. */
 async function listDesigns(db, { project }) {
   const rows = db
@@ -280,7 +291,7 @@ async function listDesigns(db, { project }) {
     )
     .all();
   const latest = new Map();
-  const where = new Map(); // dir -> { repo, root }; a session may write into another repo than its cwd
+  const resolve = writeResolver(); // a session may write into another repo than its cwd
   for (const r of rows) {
     let scan;
     try {
@@ -289,9 +300,7 @@ async function listDesigns(db, { project }) {
       continue; // transcript missing or unreadable
     }
     for (const w of scan.writes) {
-      const dir = path.dirname(w.file);
-      if (!where.has(dir)) where.set(dir, { repo: workRepo(dir), root: checkoutRoot(dir) });
-      const { repo, root } = where.get(dir);
+      const { repo, root } = resolve(w.file);
       if (repo !== project || !root) continue;
       const rel = repoRelative(w.file, [root]);
       const kind = rel && isDesignPath(rel);
@@ -305,7 +314,63 @@ async function listDesigns(db, { project }) {
     .sort((a, b) => (a.writtenAt < b.writtenAt ? 1 : a.writtenAt > b.writtenAt ? -1 : 0));
 }
 
+const BRIEF_BYTES = 4096;
+const oneLine = (v) => String(v).replace(/\s*\n\s*/g, " ");
+
+/** Answered questions and approved plans earlier sessions made in a task's area, as brief lines (newest first, <= 4 KB). */
+async function decisionsForBrief(db, { project, area }) {
+  let all;
+  if (!area.length) all = await listDecisions(db, { project, status: "resolved", limit: 20 });
+  else {
+    const rows = db
+      .prepare(
+        `SELECT s.id, s.status, s.transcript_path FROM sessions s
+         WHERE s.id IN (SELECT DISTINCT session_id FROM events
+                        WHERE tool_name IN ('Write','Edit','MultiEdit'))
+           AND s.transcript_path IS NOT NULL`
+      )
+      .all();
+    const resolve = writeResolver();
+    all = [];
+    for (const r of rows) {
+      let scan;
+      try {
+        scan = await scanTranscript(r.transcript_path);
+      } catch {
+        continue; // transcript missing or unreadable
+      }
+      const inArea = scan.writes.some((w) => {
+        const { repo, root } = resolve(w.file);
+        const rel = repo === project && root && repoRelative(w.file, [root]);
+        return rel && areasOverlap(area, [rel]);
+      });
+      if (inArea)
+        all.push(
+          ...decisionsFromScan(scan, { sessionId: r.id, project, live: r.status === "active" })
+        );
+    }
+    all = all.filter((d) => d.status === "resolved");
+    all.sort((a, b) => (a.askedAt < b.askedAt ? 1 : a.askedAt > b.askedAt ? -1 : 0));
+  }
+  const lines = [];
+  for (const d of all) {
+    const day = d.askedAt.slice(0, 10);
+    let line;
+    if (d.reason === "plan_approval")
+      line = `- ${day} Plan onaylandı: ${oneLine(d.header || "başlıksız")}`;
+    else {
+      const a = d.payload.answer;
+      line = `- ${day} [${oneLine(d.header)}] ${oneLine(d.message)} -> ${oneLine(Array.isArray(a) ? a.join(", ") : a)}`;
+      if (d.payload.note) line += ` (not: ${oneLine(d.payload.note)})`;
+    }
+    if (Buffer.byteLength([...lines, line].join("\n"), "utf8") > BRIEF_BYTES) break;
+    lines.push(line);
+  }
+  return lines;
+}
+
 module.exports = {
+  decisionsForBrief,
   scanTranscript,
   decisionsFromScan,
   listDecisions,

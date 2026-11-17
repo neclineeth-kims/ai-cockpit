@@ -22,6 +22,7 @@ const {
   isDesignPath,
   repoRelative,
   listDesigns,
+  decisionsForBrief,
 } = require("../lib/decisions");
 after(() => {
   db.close();
@@ -406,4 +407,100 @@ test("listDesigns takes the project from the written file, not the session cwd",
     ]
   );
   assert.deepEqual(await listDesigns(db, { project: other }), []);
+});
+
+// decisionsForBrief: sessions are found by what they wrote; each carries its answered questions.
+let bn = 0;
+function briefSession(proj, written, qs, cwd = proj) {
+  const id = "bs" + bn++;
+  const lines = [];
+  for (const f of written)
+    lines.push(use("w" + n++, "Write", { file_path: path.join(proj, f) }, "2026-03-01T00:00:00Z"));
+  qs.forEach(({ ts, header = "H", question, answer, note }, i) => {
+    const Q = { question, header, multiSelect: false, options: [{ label: "x", description: "d" }] };
+    const tid = `q${bn}_${i}`;
+    lines.push(use(tid, "AskUserQuestion", { questions: [Q] }, ts));
+    const res = { answers: { [question]: answer } };
+    if (note) res.annotations = { [question]: { notes: note } };
+    lines.push(result(tid, res, ts));
+  });
+  db.prepare(
+    "INSERT INTO sessions (id, cwd, transcript_path, status) VALUES (?, ?, ?, 'completed')"
+  ).run(id, cwd, writeJsonl(lines));
+  const ev = db.prepare(
+    "INSERT INTO events (session_id, event_type, tool_name) VALUES (?, 'PostToolUse', ?)"
+  );
+  if (written.length) ev.run(id, "Write");
+  if (qs.length) ev.run(id, "AskUserQuestion");
+  return id;
+}
+
+test("brief decisions follow the task area", async () => {
+  const proj = path.join(root, "bproj1");
+  fs.mkdirSync(path.join(proj, ".git"), { recursive: true });
+  briefSession(
+    proj,
+    ["server/lib/a.js"],
+    [{ ts: "2026-03-02T00:00:00Z", question: "Sunucu?", answer: "Evet", note: "acil" }]
+  );
+  briefSession(
+    proj,
+    ["client/x.tsx"],
+    [{ ts: "2026-03-03T00:00:00Z", question: "Istemci?", answer: "Hayir" }]
+  );
+  const out = await decisionsForBrief(db, { project: proj, area: ["server/**"] });
+  assert.deepEqual(out, ["- 2026-03-02 [H] Sunucu? -> Evet (not: acil)"]);
+});
+
+test("brief decisions without area take last 20, newest first", async () => {
+  const proj = path.join(root, "bproj2");
+  fs.mkdirSync(path.join(proj, ".git"), { recursive: true });
+  const qs = Array.from({ length: 25 }, (_, i) => ({
+    ts: `2026-04-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
+    question: `Q${i}\nsatir`,
+    answer: `A${i}`,
+  }));
+  briefSession(proj, [], qs);
+  const out = await decisionsForBrief(db, { project: proj, area: [] });
+  assert.equal(out.length, 20);
+  assert.equal(out[0], "- 2026-04-25 [H] Q24 satir -> A24");
+  assert.equal(out[19], "- 2026-04-06 [H] Q5 satir -> A5");
+});
+
+test("brief decisions capped at 4096 bytes, oldest dropped", async () => {
+  const proj = path.join(root, "bproj3");
+  fs.mkdirSync(path.join(proj, ".git"), { recursive: true });
+  const qs = Array.from({ length: 10 }, (_, i) => ({
+    ts: `2026-05-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
+    question: `Q${i}`,
+    answer: "ş".repeat(300),
+  }));
+  briefSession(proj, [], qs);
+  const out = await decisionsForBrief(db, { project: proj, area: [] });
+  assert.ok(out.length > 0 && out.length < 10);
+  assert.ok(Buffer.byteLength(out.join("\n"), "utf8") <= 4096);
+  assert.ok(out[0].startsWith("- 2026-05-10"));
+});
+
+test("brief decisions skip pending and cancelled, and list plan approvals", async () => {
+  const proj = path.join(root, "bproj4");
+  fs.mkdirSync(path.join(proj, ".git"), { recursive: true });
+  const id = "bs" + bn++;
+  const Q = { question: "Acik?", header: "H", multiSelect: false, options: [] };
+  const lines = [
+    use("c1", "AskUserQuestion", { questions: [Q] }, "2026-06-01T00:00:00Z"),
+    result("c1", {}, "2026-06-01T00:00:01Z", true),
+    use("p1", "ExitPlanMode", { plan: "# Buyuk plan\nx" }, "2026-06-02T00:00:00Z"),
+    result("p1", { plan: "# Buyuk plan\nx" }, "2026-06-02T00:00:01Z"),
+    use("o1", "AskUserQuestion", { questions: [Q] }, "2026-06-03T00:00:00Z"),
+  ];
+  db.prepare(
+    "INSERT INTO sessions (id, cwd, transcript_path, status) VALUES (?, ?, ?, 'completed')"
+  ).run(id, proj, writeJsonl(lines));
+  db.prepare(
+    "INSERT INTO events (session_id, event_type, tool_name) VALUES (?, 'PostToolUse', 'ExitPlanMode')"
+  ).run(id);
+  assert.deepEqual(await decisionsForBrief(db, { project: proj, area: [] }), [
+    "- 2026-06-02 Plan onaylandı: Buyuk plan",
+  ]);
 });

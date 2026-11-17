@@ -38,7 +38,7 @@ function capBrief(text) {
  * keeps the issue text data, not instructions, for whatever agent reads it
  * (spec decision 13).
  */
-function buildBrief({ where, title, body, fields, planSection, deps, memories }) {
+function buildBrief({ where, title, body, fields, planSection, deps, memories, decisions }) {
   const f = fields || { area: [], deps: [], acceptance: [], estimate_ms: null };
   const parts = [
     `# ${where}: ${title}`,
@@ -67,6 +67,7 @@ function buildBrief({ where, title, body, fields, planSection, deps, memories })
       : ["Belirtilmedi"]),
     ""
   );
+  if (decisions && decisions.length) parts.push("## Önceki kararlar", "", ...decisions, "");
   if (memories && memories.length) {
     parts.push("## Önceki çalışmalardan notlar", "");
     for (const m of memories) parts.push(m, "");

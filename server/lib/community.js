@@ -7,7 +7,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { execFile } = require("child_process");
-const { parsePlan, parsePlanSections } = require("./plan");
+const { parsePlan, parsePlanSections, workRepo } = require("./plan");
 const { parseTaskFields, areasOverlap, taskIssueBody } = require("./task-fields");
 const { buildBrief, fetchMemories, writeBrief, planSectionFor } = require("./task-brief");
 const { gitSafeEnv } = require("./git-env");
@@ -1101,6 +1101,16 @@ async function openClaim(cfg, a, issue, me) {
     project: path.basename(cfg.localPath),
     query: [issue.title, ...fields.area].join(" "),
   });
+  // Earlier answers in this area; skipped when the DB is not open (tests) so claim never touches a real one.
+  const dbOpen = process.env.DASHBOARD_DB_PATH || require.cache[require.resolve("../db")];
+  const decisions = dbOpen
+    ? await require("./decisions")
+        .decisionsForBrief(require("../db").db, {
+          project: workRepo(cfg.localPath),
+          area: fields.area,
+        })
+        .catch(() => [])
+    : [];
   const brief = buildBrief({
     where,
     title: issue.title,
@@ -1109,6 +1119,7 @@ async function openClaim(cfg, a, issue, me) {
     planSection,
     deps,
     memories,
+    decisions,
   });
   await writeBrief(cwd, brief);
   // The issue title is data too: it lives in the brief, after the warning, never at the top of the prompt.
