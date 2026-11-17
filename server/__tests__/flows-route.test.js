@@ -314,3 +314,18 @@ test("missing role file is 400", async () => {
   fs.rmSync(path.join(cwd, "roller", "r.md"));
   assert.equal((await call("", "POST", { cwd, flow: "demo" })).status, 400);
 });
+
+test("restart cannot skip the approval gate", async () => {
+  const { ag, id } = await begin(writeU, FLOW, { approved: false });
+  const r = await call(`/${id}/restart`, "POST", { step: "uygula" });
+  assert.equal(r.status, 409);
+  assert.equal(ag.calls.length, 0);
+});
+
+test("runner refuses to start an unapproved run even if forced to running", async () => {
+  const { ag, id } = await begin(writeU, FLOW, { approved: false });
+  store.setRun(db, id, { status: "running", current_step: "uygula" });
+  await createRunner({ db, agents: ag }).start(id);
+  assert.equal(store.getRun(db, id).status, "gate");
+  assert.equal(ag.calls.length, 0);
+});

@@ -61,6 +61,7 @@ function loadFlow(cwd, name) {
 // Starts a new round at `step`; the run's work goes on in the background.
 function resumeAt(run, step) {
   if (run.status === "running") throw fail(409, "Koşu zaten çalışıyor");
+  if (run.status === "gate") throw fail(409, "Koşu kapıda; önce kapıyı cevaplayın");
   store.setRun(db, run.id, { current_step: step, status: "running", ended_at: null });
   runner.start(run.id);
   return store.getRun(db, run.id);

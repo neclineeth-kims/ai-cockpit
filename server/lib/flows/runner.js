@@ -173,6 +173,14 @@ function createRunner({ db, agents = require("./agents") }) {
   }
 
   // The approval covers the flow file and its role prompts as they were; anything edited since is unapproved.
+  function approved(run) {
+    try {
+      return store.isFlowApproved(db, fs.realpathSync(run.repo), run.flow.ad, run.flow_hash);
+    } catch {
+      return false;
+    }
+  }
+
   function changedSinceApproval(run) {
     try {
       const text = fs.readFileSync(flowPath(run.cwd, run.flow.ad), "utf8");
@@ -187,6 +195,10 @@ function createRunner({ db, agents = require("./agents") }) {
     active.add(runId);
     try {
       const run = store.getRun(db, runId);
+      // Every start path (new, resume, retry, restart) must hold an approval for exactly this content.
+      if (run?.flow_hash && !approved(run)) {
+        return setRun(runId, { status: "gate" });
+      }
       if (run?.flow_hash && changedSinceApproval(run)) {
         const row = store.startStep(db, runId, run.current_step || run.flow.adimlar[0].id);
         return fail(run, row, "Akış dosyası onaydan sonra değişti; yeniden başlatın");
