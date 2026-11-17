@@ -136,5 +136,6 @@
     "actionMuteTabby": "Samba 음소거",
     "actionReportIssue": "GitHub에 문제 보고",
     "actionReleases": "릴리스 노트 보기"
-  }
+  },
+  "flowRun": "플로우 실행"
 }

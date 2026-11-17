@@ -30,7 +30,7 @@ export interface Decision {
   sessionId: string;
   project: string;
   agent: string;
-  reason: "input_required" | "plan_approval";
+  reason: "input_required" | "plan_approval" | "confirmation";
   header?: string;
   message: string;
   options?: DecisionOption[];
@@ -41,6 +41,70 @@ export interface Decision {
   other: boolean;
   payload?: { answer?: string | string[]; note?: string; plan?: string };
   resolvedAt?: string;
+  /** Set on flow (akislar) gates: `kind` is "gate", `gate` "flow-approval" for the start approval. */
+  metadata?: {
+    kind?: string;
+    gate?: string;
+    runId?: string;
+    step?: string;
+    shown?: string[];
+    sendBack?: string[];
+  };
+}
+
+export type FlowStatus = "running" | "gate" | "done" | "failed" | "stopped" | "interrupted";
+
+export interface FlowStepDef {
+  id: string;
+  tur: "agent" | "script" | "gate";
+  ajan?: string;
+  model?: string;
+  komut?: string;
+  cikti?: string;
+  basarisizsa?: string;
+  mesaj?: string;
+}
+
+export interface FlowStepRow {
+  id: number;
+  run_id: string;
+  step: string;
+  round: number;
+  status: "running" | "gate" | "done" | "failed" | "interrupted" | "stopped";
+  exit_code: number | null;
+  session_id: string | null;
+  log_path: string | null;
+  note: string | null;
+  cost_usd: number;
+  started_at: string | null;
+  ended_at: string | null;
+}
+
+/** A run as the list returns it (`flow` is the flow name). */
+export interface FlowRunSummary {
+  id: string;
+  repo: string;
+  cwd: string;
+  task: string | null;
+  flow: string;
+  status: FlowStatus;
+  current_step: string | null;
+  cost_usd: number;
+  cost_cap_usd: number | null;
+  started_at: string;
+  ended_at: string | null;
+}
+
+/** One run with its parsed flow and every step row. */
+export interface FlowRun extends Omit<FlowRunSummary, "flow"> {
+  flow: { ad: string; maliyet_tavani?: number; adimlar: FlowStepDef[] };
+  steps: FlowStepRow[];
+}
+
+export interface FlowTemplate {
+  ad: string;
+  aciklama?: string;
+  adimlar: Array<{ id: string; tur: string }>;
 }
 
 export interface DesignFile {
@@ -289,6 +353,26 @@ export const cockpit = {
       commands: string[][];
       commits: string[];
     }>(`/community/tasks/${n}/pr`),
+  flows: (a: { repo?: string; task?: number } = {}) =>
+    request<{ runs: FlowRunSummary[] }>(`/flows?${qs(a)}`),
+  flow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}`),
+  startFlow: (a: { task: number; flow: string }) =>
+    request<{ run: FlowRun }>("/flows", { method: "POST", ...json(a) }),
+  flowGate: (id: string, body: { action: "approve" | "send_back"; step?: string; note?: string }) =>
+    request<{ run: FlowRun }>(`/flows/${id}/gate`, { method: "POST", ...json(body) }),
+  retryFlow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}/retry`, { method: "POST" }),
+  restartFlow: (id: string, step: string) =>
+    request<{ run: FlowRun }>(`/flows/${id}/restart`, { method: "POST", ...json({ step }) }),
+  stopFlow: (id: string) => request<{ run: FlowRun }>(`/flows/${id}/stop`, { method: "POST" }),
+  /** Run files are plain text, so this reads the body as text (request() would parse JSON). */
+  flowFile: async (id: string, path: string) =>
+    (await fetchBlob(`/flows/${id}/file?${qs({ path })}`)).text(),
+  flowTemplates: () => request<{ templates: FlowTemplate[] }>("/flows/templates"),
+  installFlows: () =>
+    request<{ copied: string[]; skipped: string[] }>("/flows/install", {
+      method: "POST",
+      ...json({ repo: true }),
+    }),
   decisionProjects: () => request<{ projects: DecisionProject[] }>("/decisions/projects"),
   decisions: (a: { project: string; status?: string; q?: string; limit?: number }) =>
     request<{ decisions: Decision[]; pending: number }>(`/decisions?${qs(a)}`),

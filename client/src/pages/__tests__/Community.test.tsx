@@ -38,6 +38,9 @@ vi.mock("../../lib/cockpit", async (importOriginal) => {
       ),
       communityPrPreview: vi.fn(),
       communityOpenPr: vi.fn(),
+      flows: vi.fn(() => Promise.resolve({ runs: [] })),
+      flowTemplates: vi.fn(() => Promise.resolve({ templates: [] })),
+      installFlows: vi.fn(() => Promise.resolve({ copied: ["a"], skipped: [] })),
     },
   };
 });

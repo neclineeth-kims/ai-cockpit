@@ -20,6 +20,7 @@ import {
   RotateCcw,
   UserRound,
   Users,
+  Workflow,
 } from "lucide-react";
 import {
   cockpit,
@@ -29,7 +30,10 @@ import {
   type CommunityPlanSyncPreview,
   type CommunityProvider,
   type CommunityTask,
+  type FlowRunSummary,
 } from "../lib/cockpit";
+import { announceAction } from "../lib/appEvents";
+import { FlowBadge } from "../components/flows/FlowBadge";
 
 const STATE_STYLE: Record<CommunityTask["state"], string> = {
   open: "bg-accent-muted text-indigo-200 ring-indigo-400/20",
@@ -905,6 +909,7 @@ export default function Community() {
   const [cfg, setCfg] = useState<CommunityConfig | null | undefined>(undefined);
   const [platform, setPlatform] = useState<CommunityProvider>("github");
   const [board, setBoard] = useState<CommunityBoard | null>(null);
+  const [runs, setRuns] = useState<FlowRunSummary[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [reviewFor, setReviewFor] = useState<CommunityTask | null>(null);
@@ -931,7 +936,20 @@ export default function Community() {
     } catch (x) {
       setErr((x as Error).message);
     }
+    // One call for the whole board; the badges are optional, so a failure here stays quiet.
+    cockpit
+      .flows({ repo: c.localPath })
+      .then((r) => setRuns(r.runs))
+      .catch(() => setRuns([]));
   }, []);
+
+  const installFlows = () =>
+    cockpit
+      .installFlows()
+      .then((r) =>
+        announceAction(t("flows.installed", { copied: r.copied.length, skipped: r.skipped.length }))
+      )
+      .catch((e: Error) => announceAction(t("flows.installFailed", { message: e.message })));
 
   useEffect(() => {
     load();
@@ -1024,6 +1042,14 @@ export default function Community() {
             ) : (
               <span className="font-mono truncate max-w-[280px]">{cfg.localPath}</span>
             )}
+            <button
+              type="button"
+              onClick={installFlows}
+              className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+            >
+              <Workflow className="w-3 h-3" aria-hidden />
+              {t("flows.install")}
+            </button>
             <button
               onClick={() => setEditing((v) => !v)}
               className="underline-offset-2 hover:underline"
@@ -1369,6 +1395,12 @@ export default function Community() {
                             <span className="hidden sm:block w-20 text-right text-xs text-gray-500 tabular-nums">
                               {task.estimate_ms != null ? `~${dur(task.estimate_ms)}` : ""}
                             </span>
+                            <FlowBadge
+                              task={task.number}
+                              mine={task.state === "mine"}
+                              run={runs.find((r) => r.task === `#${task.number}`)}
+                              onStarted={load}
+                            />
                             <span
                               className={`rounded-full px-2.5 py-0.5 text-xs ring-1 ${STATE_STYLE[task.state]}`}
                             >

@@ -87,6 +87,7 @@ import { Run } from "./pages/Run";
 import Plan from "./pages/Plan";
 import Decisions from "./pages/Decisions";
 import Community from "./pages/Community";
+import FlowRun from "./pages/FlowRun";
 import Prompts from "./pages/Prompts";
 import { TokenGate } from "./components/TokenGate";
 import { NotFound } from "./pages/NotFound";
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="plan" element={<Plan />} />
           <Route path="decisions" element={<Decisions />} />
           <Route path="community" element={<Community />} />
+          <Route path="flows/:id" element={<FlowRun />} />
           <Route path="prompts" element={<Prompts />} />
           <Route path="kanban" element={<KanbanBoard />} />
           <Route path="sessions" element={<Sessions />} />

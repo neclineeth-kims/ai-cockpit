@@ -4,7 +4,7 @@
  * @author Caglar Ulkuderner
  */
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
@@ -19,7 +19,13 @@ const TONE = {
   bad: "bg-red-500/15 text-red-300 ring-red-400/30",
 };
 
-export function Chip({ tone = "plain", children }: { tone?: keyof typeof TONE; children: string }) {
+export function Chip({
+  tone = "plain",
+  children,
+}: {
+  tone?: keyof typeof TONE;
+  children: ReactNode;
+}) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ring-1 ${TONE[tone]}`}
@@ -127,9 +133,11 @@ export function QuestionRow({ d }: { d: Decision }) {
               })
             : date(d.askedAt)}
         </span>
-        <span>
-          {t("decisions.session", { id: "" }).trim()} <SessionLink id={d.sessionId} />
-        </span>
+        {d.sessionId && (
+          <span>
+            {t("decisions.session", { id: "" }).trim()} <SessionLink id={d.sessionId} />
+          </span>
+        )}
       </div>
     </li>
   );

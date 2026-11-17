@@ -78,6 +78,8 @@ export function DocumentTitle() {
     title = t("decisions");
   } else if (path.startsWith("/community")) {
     title = t("community");
+  } else if (path.startsWith("/flows")) {
+    title = t("flowRun");
   } else if (path.startsWith("/prompts")) {
     title = t("prompts");
   } else if (path.startsWith("/kanban")) {

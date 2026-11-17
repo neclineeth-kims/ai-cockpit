@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Download, Loader2, MessageSquareQuote } from "lucide-react";
 import { cockpit, type Decision, type DecisionProject, type DesignFile } from "../lib/cockpit";
 import { DesignsTable, PlanRow, QuestionRow } from "../components/decisions/Rows";
+import { GateCard } from "../components/flows/GateCard";
 
 const TABS = ["pending", "decisions", "plans", "designs"] as const;
 type Tab = (typeof TABS)[number];
@@ -117,9 +118,13 @@ export default function Decisions() {
           <div className="card">
             {lists.pending.length ? (
               <ul className="divide-y divide-border">
-                {lists.pending.map((d) => (
-                  <QuestionRow key={d.id} d={d} />
-                ))}
+                {lists.pending.map((d) =>
+                  d.metadata?.kind === "gate" ? (
+                    <GateCard key={d.id} d={d} onAnswered={load} />
+                  ) : (
+                    <QuestionRow key={d.id} d={d} />
+                  )
+                )}
               </ul>
             ) : (
               empty(t("decisions.emptyPending"))
