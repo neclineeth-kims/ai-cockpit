@@ -246,3 +246,37 @@ it("runScript runs a real command into the log file", async () => {
   assert.equal(res.exitCode, 0);
   assert.match(fs.readFileSync(logPath, "utf8"), /hi/);
 });
+
+it("cost cap gate row does not count toward en_cok_tur", async () => {
+  const run = mkRun(
+    [
+      agentStep("uygula"),
+      agentStep("incele", { cikti: "inceleme.md", basarisizsa: "uygula", en_cok_tur: 2 }),
+    ],
+    { maliyet_tavani: 1 }
+  );
+  store.setRun(db, run.id, { cost_cap_usd: 1 });
+  const agents = fakeAgents((c) =>
+    c.n === 1 ? { files: { "inceleme.md": "SONUÇ: DÜZELT\n" } } : {}
+  );
+  agents.cost = 2;
+  const runner = createRunner({ db, agents });
+  await runner.start(run.id);
+  assert.equal(store.getRun(db, run.id).status, "gate");
+  // the cap gate held incele before it ran: one row, zero executed rounds
+  assert.equal(store.roundsOf(db, run.id, "incele"), 1);
+  assert.equal(store.executedRounds(db, run.id, "incele"), 0);
+});
+
+it("an unexpected error marks the run failed instead of rejecting", async () => {
+  const run = mkRun([agentStep("a", { cikti: "a.md" })]);
+  fs.mkdirSync(runDir("a.md")); // a directory where the output file should be
+  store.startStep(db, run.id, "a", "done");
+  store.finishStep(db, store.lastStep(db, run.id, "a").id, { log_path: "x" });
+  const agents = fakeAgents();
+  agents.runAgent = () => {
+    throw new Error("boom");
+  };
+  await createRunner({ db, agents }).start(run.id);
+  assert.equal(store.getRun(db, run.id).status, "failed");
+});

@@ -89,6 +89,14 @@ const roundsOf = (db, runId, step) =>
   db.prepare("SELECT COUNT(*) AS n FROM flow_steps WHERE run_id = ? AND step = ?").get(runId, step)
     .n;
 
+// Rows that actually ran an agent or script (they get a log path); gate rows held before a run do not count.
+const executedRounds = (db, runId, step) =>
+  db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM flow_steps WHERE run_id = ? AND step = ? AND log_path IS NOT NULL"
+    )
+    .get(runId, step).n;
+
 function addCost(db, runId, rowId, usd) {
   db.prepare("UPDATE flow_steps SET cost_usd = cost_usd + ? WHERE id = ?").run(usd, rowId);
   db.prepare("UPDATE flow_runs SET cost_usd = cost_usd + ? WHERE id = ?").run(usd, runId);
@@ -131,6 +139,7 @@ module.exports = {
   finishStep,
   lastStep,
   roundsOf,
+  executedRounds,
   addCost,
   markInterrupted,
   isScriptApproved,

@@ -82,7 +82,7 @@ function createRunner({ db, agents = require("./agents") }) {
       return toGate(run, step, "Maliyet tavanı aşıldı");
     }
     const round = store.roundsOf(db, run.id, step.id) + 1;
-    keepPreviousOutput(run, step, round - 1);
+    keepPreviousOutput(run, step, store.executedRounds(db, run.id, step.id));
     const logPath = path.join(run.cwd, RUN_DIR, "log", `${step.id}-${round}.log`);
     const row = store.startStep(db, run.id, step.id);
     store.finishStep(db, row.id, { log_path: logPath });
@@ -123,7 +123,7 @@ function createRunner({ db, agents = require("./agents") }) {
     if (verdict === "TAMAM") return advance(run, row, step);
     if (verdict !== "DÜZELT")
       return fail(run, row, 'İlk satır "SONUÇ: TAMAM" ya da "SONUÇ: DÜZELT" olmalı');
-    if (store.roundsOf(db, run.id, step.id) >= step.en_cok_tur) {
+    if (store.executedRounds(db, run.id, step.id) >= step.en_cok_tur) {
       return toGate(run, step, "Tur sınırı aşıldı", row);
     }
     advance(run, row, step, step.basarisizsa);
@@ -179,6 +179,12 @@ function createRunner({ db, agents = require("./agents") }) {
     active.add(runId);
     try {
       await loop(runId);
+    } catch (err) {
+      // Callers do not await start(): an escaping rejection would take the server down.
+      const running = store.getRun(db, runId)?.steps.find((s) => s.status === "running");
+      if (running)
+        store.finishStep(db, running.id, { status: "failed", note: err.message, ended_at: now() });
+      setRun(runId, { status: "failed", ended_at: now() });
     } finally {
       active.delete(runId);
     }
